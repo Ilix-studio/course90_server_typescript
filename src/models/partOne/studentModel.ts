@@ -7,6 +7,11 @@ interface Student extends Document {
     course: Schema.Types.ObjectId; // Reference to the course
     isActive: boolean; // Indicates if this passkey is currently active
   }[];
+  performance: {
+    courseId: Schema.Types.ObjectId;
+    scores: number[];
+  }[];
+
   deviceId: string;
 }
 
@@ -24,6 +29,12 @@ const studentSchema = new Schema<Student>({
     },
   ],
   deviceId: { type: String, required: true },
+  performance: [
+    {
+      courseId: { type: Schema.Types.ObjectId, ref: "Course" },
+      scores: [{ type: Number }],
+    },
+  ],
 });
 
 export const Student = model<Student>("Student", studentSchema);
