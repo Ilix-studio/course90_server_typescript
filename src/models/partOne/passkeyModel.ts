@@ -12,6 +12,7 @@ export interface Passkey extends Document {
   payment: Schema.Types.ObjectId;
   institute: Schema.Types.ObjectId;
   course: Schema.Types.ObjectId;
+  student: Schema.Types.ObjectId; // Reference to the student (optional, for tracking)
 }
 
 const passkeySchema = new Schema<Passkey>(
@@ -39,6 +40,7 @@ const passkeySchema = new Schema<Passkey>(
       ref: "Institute",
       required: true,
     },
+    student: { type: Schema.Types.ObjectId, ref: "Student" },
   },
   { timestamps: true }
 );
