@@ -20,4 +20,4 @@ const instituteSchema = new Schema<Institute>({
   courses: [{ type: Schema.Types.ObjectId, ref: "Course" }],
 });
 
-export const Institute = model<Institute>("Institute", instituteSchema);
+export const Institute = model<Institute>("InstituteAuth", instituteSchema);

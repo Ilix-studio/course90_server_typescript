@@ -9,13 +9,17 @@ import {
   profileInstitute,
   registerInstitute,
   verifyInstitute,
-} from "@/controllers/institutes.controller";
+} from "../../controllers/auth/institutes.controller";
 
 const router = express.Router();
 
-// Institute registration and login
+// Institute registration
 router.post("/register", registerInstitute);
+
+// Institute login
 router.post("/login", loginInstitute);
+
+// Institute profile
 router.get("/profile", profileInstitute);
 
 // Verify institute with govt ID

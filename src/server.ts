@@ -1,7 +1,8 @@
 import express, { Application, Request, Response, NextFunction } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import connectDB from "./utils/dbConnection";
+import connectDB from "./config/dbConnection";
+import instituteRoutes from "./routes/auth/institutesRoutes";
 
 // Create Express application
 const app: Application = express();
@@ -18,6 +19,8 @@ app.listen(PORT, () => {
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use("/api/institute", instituteRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

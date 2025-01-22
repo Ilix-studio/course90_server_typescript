@@ -8,7 +8,7 @@ import {
   loginStudent,
   submitMCQ,
   switchAccount,
-} from "@/controllers/student.controller";
+} from "@/controllers/auth/student.controller";
 
 const router = express.Router();
 
