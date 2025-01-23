@@ -1,15 +1,15 @@
 import express from "express";
 import {
   createCourse,
-  createGeneralMCQ,
-  createMockMCQ,
-  createNote,
-  generatePasskey,
   loginInstitute,
   profileInstitute,
   registerInstitute,
   verifyInstitute,
 } from "../../controllers/auth/institutes.controller";
+import { generatePasskey } from "../../controllers/payment/passkeyControler";
+import { createGeneralMCQ } from "../../controllers/mcq/generalQcontroller";
+import { createMockMCQ } from "../../controllers/mcq/mockQcontroller";
+import { createNote } from "../../controllers/mcq/notesController";
 
 const router = express.Router();
 

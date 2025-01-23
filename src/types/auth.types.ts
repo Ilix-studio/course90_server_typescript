@@ -1,3 +1,5 @@
+import { Document } from "mongoose";
+
 export interface IInstitute {
   _id: string;
   instituteName: string;
@@ -16,4 +18,31 @@ export interface IStudent {
   nanoId: string[];
   createdAt: Date;
   updatedAt: Date;
+}
+export interface RegisterInstituteBody {
+  instituteName: string;
+  username: string;
+  phoneNumber: string;
+  email: string;
+  password: string;
+}
+
+export interface LoginInstituteBody {
+  email: string;
+  password: string;
+}
+
+export interface IInstituteDocument extends IInstitute, Document {
+  _id: string;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+// Additional type for response data
+export interface IInstituteResponse {
+  _id: string;
+  instituteName: string;
+  username: string;
+  phoneNumber: string;
+  email: string;
+  token?: string;
 }

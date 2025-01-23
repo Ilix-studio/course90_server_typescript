@@ -1,14 +1,19 @@
 import express from "express";
 import {
   getCourses,
-  getGeneralMCQs,
-  getMockMCQs,
-  getNotes,
   getPerformance,
   loginStudent,
-  submitMCQ,
   switchAccount,
-} from "@/controllers/auth/student.controller";
+} from "@/controllers/student/student.controller";
+import {
+  getGeneralMCQs,
+  submitGeneralMCQ,
+} from "@/controllers/student/getGmcqsController";
+import {
+  getMockMCQs,
+  submitMockMCQ,
+} from "@/controllers/student/getMmcqsController";
+import { getNotes } from "@/controllers/student/getNoteController";
 
 const router = express.Router();
 
@@ -27,7 +32,8 @@ router.get("/courses/:courseId/mock-mcqs", getMockMCQs);
 router.get("/courses/:courseId/notes", getNotes);
 
 // Submit an answer to an MCQ (General or MOCK).
-router.post("/mcq/submit", submitMCQ);
+router.post("/mcq/GQ/submit", submitGeneralMCQ);
+router.post("/mcq/MQ/submit", submitMockMCQ);
 
 // Get performance metrics for a student in a course.
 router.get("/performance/:courseId", getPerformance);

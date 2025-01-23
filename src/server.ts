@@ -9,10 +9,12 @@ const app: Application = express();
 // Load environment variables
 dotenv.config();
 
-const PORT = process.env.PORT || 3000;
-
+const PORT = process.env.PORT || 8080;
+app.get("/", (req: Request, res: Response) => {
+  res.send("server is ready");
+});
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Listening to http://localhost:${PORT}`);
 });
 
 // Middleware
