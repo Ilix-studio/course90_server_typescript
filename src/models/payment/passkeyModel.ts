@@ -45,4 +45,4 @@ const passkeySchema = new Schema<Passkey>(
   { timestamps: true }
 );
 
-export const PasskeyModel = model<Passkey>("Passkey", passkeySchema);
+export const PasskeyModel = model<Passkey>("Passkeys", passkeySchema);

@@ -5,7 +5,7 @@ export interface IMCQ {
 }
 
 export interface IGeneralQuestionSet {
-  _id: string;
+  instituteId: string;
   courseName: string;
   subject: string;
   language: string;

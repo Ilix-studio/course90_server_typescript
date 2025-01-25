@@ -10,7 +10,10 @@ export interface IInstitute {
   createdAt: Date;
   updatedAt: Date;
 }
-
+export interface IInstituteModel extends IInstitute, Document {
+  _id: string;
+  __v: number;
+}
 export interface IStudent {
   _id: string;
   name: string;
