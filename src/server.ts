@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import connectDB from "./config/dbConnection";
 import instituteRoutes from "./routes/auth/institutesRoutes";
 import { errorHandler, routeNotFound } from "./middlware/errorMiddleware";
+import courseRoutes from "./routes/courses/courseRoutes";
 
 // Create Express application
 const app: Application = express();
@@ -24,6 +25,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/institute", instituteRoutes);
+app.use("/api/course", courseRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

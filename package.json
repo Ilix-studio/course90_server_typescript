@@ -4,7 +4,7 @@
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "nodemon",
+    "server": "nodemon",
     "build": "tsc",
     "lint": "eslint . --ext .ts",
     "test": "jest"

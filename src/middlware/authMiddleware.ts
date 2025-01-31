@@ -2,9 +2,9 @@ import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { AuthenticatedRequest } from "../types/request.types";
 import { InstituteAuth } from "../models/auth/instituteModel";
-import logger from "@/utils/logger";
+import logger from "../utils/logger";
 import asyncHandler from "express-async-handler";
-import { IInstituteModel } from "@/types/auth.types";
+import { IInstituteModel } from "../types/auth.types";
 
 interface JwtPayload {
   id: string;

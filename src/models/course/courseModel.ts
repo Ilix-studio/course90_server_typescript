@@ -16,4 +16,4 @@ const courseSchema = new Schema<Course>({
   longNotes: [{ type: Schema.Types.ObjectId, ref: "LongNote" }],
 });
 
-export const Course = model<Course>("Course", courseSchema);
+export const CourseModel = model<Course>("Course", courseSchema);

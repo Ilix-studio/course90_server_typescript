@@ -4,7 +4,7 @@ import {
   getPerformance,
   loginStudent,
   switchAccount,
-} from "../../controllers/student/student.controller";
+} from "../../controllers/student/studentAuth.controller";
 import {
   getGeneralMCQs,
   submitGeneralMCQ,

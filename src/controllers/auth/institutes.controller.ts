@@ -11,12 +11,11 @@ export const registerInstitute = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const {
       instituteName,
-      username,
       phoneNumber,
       email,
       password,
     }: RegisterInstituteBody = req.body;
-    if (!instituteName || !username || !phoneNumber || !email || !password) {
+    if (!instituteName || !phoneNumber || !email || !password) {
       res.status(400);
       throw new Error("Please add all fields");
     }
@@ -32,13 +31,13 @@ export const registerInstitute = asyncHandler(
 
     const newInstitute = await InstituteAuth.create({
       instituteName,
-      username,
       phoneNumber,
       email,
       password: hashedPassword,
     });
 
     if (newInstitute) {
+      const token = generateToken(newInstitute._id.toString()); // Generate the token here
       res.status(201).json({
         success: true,
         data: {
@@ -46,7 +45,7 @@ export const registerInstitute = asyncHandler(
           instituteName: newInstitute.instituteName,
           phoneNumber: newInstitute.phoneNumber,
           email: newInstitute.email,
-          token: generateToken,
+          token: token,
         },
       });
     } else {
@@ -55,18 +54,44 @@ export const registerInstitute = asyncHandler(
     }
   }
 );
+// Logic for institute login
+export const loginInstitute = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email, password } = req.body;
 
-export const loginInstitute = async (req: Request, res: Response) => {
-  // Logic for institute login
-};
-export const profileInstitute = async (req: Request, res: Response) => {
-  // Logic for institute login
-};
+    // Validate input
+    if (!email || !password) {
+      res.status(400);
+      throw new Error("Please provide email and password");
+    }
 
-export const verifyInstitute = async (req: Request, res: Response) => {
-  // Logic for verifying institute
-};
+    const instituteLogin = await InstituteAuth.findOne({ email });
+    if (!instituteLogin) {
+      res.status(400);
+      throw new Error("Institute not found");
+    }
 
-export const createCourse = async (req: Request, res: Response) => {
-  // Logic for creating a course
-};
+    const isPasswordCorrect = await bcrypt.compare(
+      password,
+      instituteLogin.password
+    );
+
+    if (!isPasswordCorrect) {
+      res.status(400);
+      throw new Error("Invalid credentials");
+    }
+
+    res.json({
+      _id: instituteLogin.id,
+      instituteName: instituteLogin.instituteName,
+      email: instituteLogin.email,
+      token: generateToken(instituteLogin._id.toString()),
+      message: "Successfully logged in",
+    });
+  }
+);
+
+// Logic for institute logout
+export const logoutInstitute = asyncHandler(
+  async (req: Request, res: Response) => {}
+);
