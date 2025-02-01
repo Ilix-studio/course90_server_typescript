@@ -11,7 +11,7 @@ import express from "express";
 const router = express.Router();
 
 // Get all the Mock Question
-router.get("/get-mockQ", protectAccess, getMockQuestions);
+router.get("/get-mockQ", getMockQuestions);
 
 // create the Mock Question
 router.post("/create-mockQuestions", protectAccess, createMockQuestions);
@@ -20,12 +20,14 @@ router.post("/create-mockQuestions", protectAccess, createMockQuestions);
 router.post("/add-MQ/:mockQSetId", protectAccess, addMCQforMQ);
 
 // update the Mock Question
-router.patch("/updateMQ/:id", protectAccess, updateMQ);
+router.patch("/updateMQ/:mockQSetId", protectAccess, updateMQ);
 
 // update  MCQ form
-router.patch("/updateMQ/:mockQSetId", protectAccess, updateMQ_MCQ);
+router.patch("/updateMQ/:mockQSetId/mcq/:mcqId", protectAccess, updateMQ_MCQ);
 
 // delete the Mock Question
 router.delete("/deleteMQ/:id", protectAccess, deleteMQ);
 
 export default router;
+
+// http://localhost:8080/api/MQ/create-mockQuestions

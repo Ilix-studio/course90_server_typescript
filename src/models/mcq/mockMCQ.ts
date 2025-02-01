@@ -7,6 +7,7 @@ export interface PerformanceMCQSchema extends Document {
   performanceData?: {
     timeTaken: number;
     attempts: number;
+    marks?: number;
   };
 }
 
@@ -35,14 +36,17 @@ const performanceMCQSchema = new Schema({
   performanceData: {
     timeTaken: { type: Number },
     attempts: { type: Number },
+    marks: { type: Number },
   },
 });
 
 interface MockMCQ extends Document {
   subject: string;
   language: string;
+  totalMarks: number;
+  passingMarks: number;
   mcqs: PerformanceMCQSchema[];
-  course: Schema.Types.ObjectId;
+  courseId: Schema.Types.ObjectId;
 }
 const mockMcqSchema = new Schema<MockMCQ>({
   subject: {
@@ -53,7 +57,15 @@ const mockMcqSchema = new Schema<MockMCQ>({
     type: String,
     required: true,
   },
+  totalMarks: {
+    type: Number,
+    required: true,
+  },
+  passingMarks: {
+    type: Number,
+    required: true,
+  },
   mcqs: [performanceMCQSchema],
-  course: { type: Schema.Types.ObjectId, ref: "Course", required: true },
+  courseId: { type: Schema.Types.ObjectId, ref: "Course", required: true },
 });
-export const GeneralMCQModel = model<MockMCQ>("MockMCQ", mockMcqSchema);
+export const MockMCQModel = model<MockMCQ>("MockMCQ", mockMcqSchema);
