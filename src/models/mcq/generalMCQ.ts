@@ -1,13 +1,28 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
 
 export interface MCQSchema extends Document {
-  questionName: string; // The text of the question
-  options: string[]; // Array of options for the question
-  correctOption: number; // Index of the correct option in the `options` array
+  _id: Types.ObjectId;
+  questionName: string;
+  options: string[];
+  correctOption: number;
+}
+
+interface GeneralMCQ extends Document {
+  course: Types.ObjectId; // Reference to Course model
+  subject: string;
+  language: string;
+  topic: string;
+  mcqs: MCQSchema[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // MCQ Sub-Schema
 const mcqSchema = new Schema({
+  _id: {
+    type: Schema.Types.ObjectId,
+    default: () => new Types.ObjectId(),
+  },
   questionName: {
     type: String,
     required: true,
@@ -30,28 +45,35 @@ const mcqSchema = new Schema({
   },
 });
 
-interface GeneralMCQ extends Document {
-  subject: string;
-  language: string;
-  topic: string;
-  mcqs: MCQSchema[];
-  course: Schema.Types.ObjectId;
-}
-const generalMcqSchema = new Schema<GeneralMCQ>({
-  subject: {
-    type: String,
-    required: true,
+const generalMcqSchema = new Schema<GeneralMCQ>(
+  {
+    course: {
+      type: Schema.Types.ObjectId,
+      ref: "Course",
+      required: [true, "Course is required"],
+    },
+    subject: {
+      type: String,
+      required: [true, "Subject is required"],
+      trim: true,
+    },
+    language: {
+      type: String,
+      required: [true, "Language is required"],
+      trim: true,
+    },
+    topic: {
+      type: String,
+      required: [true, "Topic is required"],
+      trim: true,
+    },
+    mcqs: [mcqSchema],
   },
-  language: {
-    type: String,
-    required: true,
-  },
-  topic: {
-    type: String,
-  },
-  mcqs: [mcqSchema],
-  course: { type: Schema.Types.ObjectId, ref: "Course", required: true },
-});
+  {
+    timestamps: true,
+  }
+);
+
 export const GeneralMCQModel = model<GeneralMCQ>(
   "GeneralMCQ",
   generalMcqSchema

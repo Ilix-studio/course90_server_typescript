@@ -21,22 +21,15 @@ router.post("/createCourses", protectAccess, createCourse);
 // Get Courses
 router.get("/allcourses", protectAccess, getCourses);
 
+// router.get('/:courseId', protectAccess, getCourse);
+
 // update Courses
-router.put("/updatecourse", protectAccess, updateCourses);
+router.put("/updatecourse/:courseId", protectAccess, updateCourses);
 
 // delete Courses
-router.delete("/deleteCourse", protectAccess, deleteCourses);
+router.delete("/deleteCourse/:courseId", protectAccess, deleteCourses);
 
 // Generate a passkey for a course.
 router.post("/passkeys/generate", protectAccess, generatePasskey);
-
-// Create a new MCQ question in general form
-// router.post("/:courseId/generalmcqs", protectAccess, createGeneralMCQ);
-
-// Create a new MCQ question in mock form.
-// router.post("/:courseId/mockmcqs", protectAccess, createMockMCQ);
-
-// Create a new long note for a course.
-// router.post("/:courseId/notes", protectAccess, createNote);
 
 export default router;

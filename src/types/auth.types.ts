@@ -49,3 +49,10 @@ export interface IInstituteResponse {
   email: string;
   token?: string;
 }
+
+export interface CreateGeneralQuestionBody {
+  courseId: string; // Changed from courseName to courseId
+  subject: string;
+  language: string;
+  topic: string;
+}
