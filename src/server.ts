@@ -6,6 +6,10 @@ import instituteRoutes from "./routes/auth/institutesRoutes";
 import { errorHandler, routeNotFound } from "./middlware/errorMiddleware";
 import courseRoutes from "./routes/courses/courseRoutes";
 import profileRoutes from "./routes/profile/profileRoutes";
+import generalRoutes from "./routes/mcq/generalQRoute";
+import mockRoutes from "./routes/mcq/mockQroute";
+import feedRoutes from "./routes/mcq/feedQRoute";
+import notesRoutes from "./routes/mcq/notesRoute";
 
 // Create Express application
 const app: Application = express();
@@ -28,6 +32,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/institute", instituteRoutes);
 app.use("/api/course", courseRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/GQ", generalRoutes);
+app.use("/api/MQ", mockRoutes);
+app.use("/api/FQ", feedRoutes);
+app.use("/api/notes", notesRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
