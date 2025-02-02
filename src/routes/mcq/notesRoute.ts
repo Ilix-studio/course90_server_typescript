@@ -23,3 +23,5 @@ router.delete("/deleteNotes/:id", protectAccess, deleteNotes);
 export default router;
 
 //Short notes, long Notes,
+
+// http://localhost:8080/api/notes/create-notes

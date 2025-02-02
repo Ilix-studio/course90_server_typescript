@@ -11,7 +11,7 @@ import express from "express";
 const router = express.Router();
 
 // Get all the Mock Question
-router.get("/get-mockQ", getMockQuestions);
+router.get("/get-mockQ", protectAccess, getMockQuestions);
 
 // create the Mock Question
 router.post("/create-mockQuestions", protectAccess, createMockQuestions);

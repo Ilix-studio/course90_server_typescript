@@ -11,7 +11,7 @@ import express from "express";
 const router = express.Router();
 
 // Get all the General Question
-router.get("/get-generalQ", getGeneralQuestions);
+router.get("/get-generalQ", protectAccess, getGeneralQuestions);
 
 // create the General Question
 router.post("/create-generalQuestions", protectAccess, createGeneralQuestions);

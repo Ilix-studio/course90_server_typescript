@@ -15,7 +15,7 @@ const router = express.Router();
 router.post("/publish", protectAccess, publishMockTest);
 
 // Get all the Feed Question
-router.get("/get-feedQ", getFeedQuestions);
+router.get("/get-feedQ", protectAccess, getFeedQuestions);
 
 // create the Feed Question and insert MCQ form
 router.post("/add-FQ/:feedQSetId", protectAccess, addMCQforFQ);
