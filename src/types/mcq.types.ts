@@ -1,6 +1,7 @@
 import { Document, Types } from "mongoose";
 
 export interface IMCQ {
+  _id?: Types.ObjectId;
   questionName: string;
   options: string[];
   correctOption: number;
@@ -24,6 +25,9 @@ export interface IMockQuestionSet extends Omit<IGeneralQuestionSet, "topic"> {
 }
 
 export interface MCQDocument extends Document {
+  _id: Types.ObjectId;
+}
+export interface IMCQDocumentt extends IMCQ {
   _id: Types.ObjectId;
 }
 export interface CreateGeneralQuestionBody {

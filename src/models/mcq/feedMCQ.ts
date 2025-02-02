@@ -1,24 +1,24 @@
 import { IMCQ } from "@/types/mcq.types";
-import mongoose, { Schema } from "mongoose";
+import { Schema, model } from "mongoose";
 
 interface IPublishedMock {
   instituteId: string;
-  courseName: string;
+  courseId: string;
   subject: string;
   title: string;
   mcqs: IMCQ[];
   publishedAt: Date;
-  expiresAt: Date;
-  isActive: boolean;
+  publishedBy: String;
 }
 
 const publishedMockSchema = new Schema<IPublishedMock>({
+  //Store the institute Id in the model
   instituteId: {
     type: String,
-    required: true,
     ref: "Institute",
   },
-  courseName: {
+  //Store the course Id in the model to fetch by differenet course in mobile app
+  courseId: {
     type: String,
     required: true,
   },
@@ -41,17 +41,13 @@ const publishedMockSchema = new Schema<IPublishedMock>({
     type: Date,
     default: Date.now,
   },
-  expiresAt: {
-    type: Date,
+  publishedBy: {
+    type: String,
     required: true,
-  },
-  isActive: {
-    type: Boolean,
-    default: true,
   },
 });
 
-export default mongoose.model<IPublishedMock>(
+export const PublishedMock = model<IPublishedMock>(
   "PublishedMock",
   publishedMockSchema
 );
