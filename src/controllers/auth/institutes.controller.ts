@@ -93,5 +93,7 @@ export const loginInstitute = asyncHandler(
 
 // Logic for institute logout
 export const logoutInstitute = asyncHandler(
-  async (req: Request, res: Response) => {}
+  async (_req: Request, res: Response) => {
+    res.json({ message: "Logged out successfully" });
+  }
 );

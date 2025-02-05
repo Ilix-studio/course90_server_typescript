@@ -1,10 +1,5 @@
 import express from "express";
-import {
-  getCourses,
-  getPerformance,
-  loginStudent,
-  switchAccount,
-} from "../../controllers/student/studentAuth.controller";
+
 import {
   getGeneralMCQs,
   submitGeneralMCQ,
@@ -14,23 +9,30 @@ import {
   submitMockMCQ,
 } from "../../controllers/student/getMmcqsController";
 import { getNotes } from "../../controllers/student/getNoteController";
-import { getFeedMockTests } from "../../controllers/mcq/feedQcontroller";
-import { submitPublishedMCQ } from "../../controllers/student/getPublishQcontroller";
+
+import {
+  getFeedMockTests,
+  submitPublishedMCQ,
+} from "../../controllers/student/getPublishQcontroller";
+import {
+  getPerformance,
+  loginStudent,
+  switchAccount,
+} from "../../controllers/auth/studentAuthcontroller";
+import { getCourses } from "../../controllers/course/createCourse.controller";
 
 const router = express.Router();
 
 // Student login with passkey
-router.post("/login", loginStudent);
+router.post("/studentlogin", loginStudent);
 router.post("/switch-account", switchAccount);
+
 // Get course content
-router.get("/courses", getCourses);
+router.get("/courses");
 
-// Get General MCQs for a course.
+// Get General/Mock/Notes MCQs for a course.
 router.get("/courses/:courseId/general-mcqs", getGeneralMCQs);
-
-//Get MOCK MCQs for a course.
 router.get("/courses/:courseId/mock-mcqs", getMockMCQs);
-
 router.get("/courses/:courseId/notes", getNotes);
 
 //Get publish MCQs from all the institutes.
@@ -41,9 +43,19 @@ router.post("/mcq/publish/submit", submitPublishedMCQ);
 router.post("/mcq/GQ/submit", submitGeneralMCQ);
 router.post("/mcq/MQ/submit", submitMockMCQ);
 
-router.post("/mcq/MQ/submit", submitMockMCQ);
-
 // Get performance metrics for a student in a course.
 router.get("/performance/:courseId", getPerformance);
 
 export default router;
+
+// http://localhost:8080/studentlogin
+// http://localhost:8080/switch-account
+// http://localhost:8080/courses
+// http://localhost:8080/courses/:courseId/general-mcqs
+// http://localhost:8080/courses/:courseId/mock-mcqs
+// http://localhost:8080/courses/:courseId/notes
+// http://localhost:8080/feed
+// http://localhost:8080/mcq/publish/submit
+// http://localhost:8080/mcq/MQ/submit
+// http://localhost:8080/mcq/FQ/submit
+// http://localhost:8080/performance/:courseId

@@ -1,4 +1,4 @@
-import { IMCQ } from "@/types/mcq.types";
+import { IMCQ } from "../../types/mcq.types";
 import { Schema, model } from "mongoose";
 
 interface IPublishedMock {

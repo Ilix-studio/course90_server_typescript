@@ -2,7 +2,7 @@ import asyncHandler from "express-async-handler";
 import { Request, Response } from "express";
 import { IMCQ } from "../../types/mcq.types";
 import { PublishedMock } from "../../models/mcq/feedMCQ";
-import { AuthenticatedRequest } from "@/types/request.types";
+import { AuthenticatedRequest } from "../../types/request.types";
 import { Types } from "mongoose";
 
 interface IPublishMockBody {

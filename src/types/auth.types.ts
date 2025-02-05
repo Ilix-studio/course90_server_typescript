@@ -1,4 +1,4 @@
-import { Document } from "mongoose";
+import { Document, Types } from "mongoose";
 
 export interface IInstitute {
   _id: string;
@@ -55,4 +55,15 @@ export interface CreateGeneralQuestionBody {
   subject: string;
   language: string;
   topic: string;
+}
+export interface StudentAuthenticatedRequest extends Request {
+  student: {
+    deviceId: string;
+    passcode: {
+      passkey: string;
+      institute: Types.ObjectId;
+      course: Types.ObjectId;
+      isActive: boolean;
+    }[];
+  };
 }

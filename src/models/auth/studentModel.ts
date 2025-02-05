@@ -1,7 +1,8 @@
 import { Schema, model, Document } from "mongoose";
 
 interface Student extends Document {
-  passkeys: {
+  instituteName: Schema.Types.ObjectId;
+  passcode: {
     passkey: string; // Passkey provided by the institute
     institute: Schema.Types.ObjectId; // Reference to the institute
     course: Schema.Types.ObjectId; // Reference to the course
@@ -16,7 +17,8 @@ interface Student extends Document {
 }
 
 const studentSchema = new Schema<Student>({
-  passkeys: [
+  instituteName: { type: Schema.Types.ObjectId },
+  passcode: [
     {
       passkey: { type: String, required: true },
       institute: {
@@ -37,4 +39,4 @@ const studentSchema = new Schema<Student>({
   ],
 });
 
-export const Student = model<Student>("Student", studentSchema);
+export const StudentModel = model<Student>("Student", studentSchema);

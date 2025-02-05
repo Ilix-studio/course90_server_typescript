@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import logger from "../utils/logger";
-import { CustomError } from "@/types/error.types";
+import { CustomError } from "../types/error.types";
 
 export const errorHandler = (
   err: Error,

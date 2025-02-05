@@ -1,6 +1,7 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
 
 export interface PerformanceMCQSchema extends Document {
+  _id: Types.ObjectId;
   questionName: string; // The text of the question
   options: string[]; // Array of options for the question
   correctOption: number; // Index of the correct option in the `options` array

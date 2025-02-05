@@ -1,4 +1,4 @@
-import { PaymentStatus } from "@/constants/enums";
+import { PaymentStatus } from "../constants/enums";
 
 export interface IPayment {
   _id: string;
