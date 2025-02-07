@@ -4,11 +4,10 @@ import {
   ProfileResponse,
 } from "../../types/profile.types";
 
-import { InstituteProfileModel } from "../../models/profile/ProfileModel";
-
 import { Response } from "express";
 import asyncHandler from "express-async-handler";
 import { InstituteAuth } from "../../models/auth/instituteModel";
+import { InstituteProfileModel } from "../../models/profile/profileModel";
 
 // Create a new profile
 export const createInstituteProfile = asyncHandler(

@@ -1,5 +1,4 @@
 import express from "express";
-
 import {
   getGeneralMCQs,
   submitGeneralMCQ,
@@ -9,7 +8,6 @@ import {
   submitMockMCQ,
 } from "../../controllers/student/getMmcqsController";
 import { getNotes } from "../../controllers/student/getNoteController";
-
 import {
   getFeedMockTests,
   submitPublishedMCQ,
@@ -19,7 +17,6 @@ import {
   loginStudent,
   switchAccount,
 } from "../../controllers/auth/studentAuthcontroller";
-import { getCourses } from "../../controllers/course/createCourse.controller";
 
 const router = express.Router();
 
