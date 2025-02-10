@@ -7,7 +7,12 @@
     "server": "nodemon",
     "build": "tsc",
     "lint": "eslint . --ext .ts",
-    "test": "jest"
+    "test": "jest",
+    "deploy": "npm run build && gcloud app deploy",
+    "gcp-build": "tsc -p ."
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "keywords": [],
   "author": "",

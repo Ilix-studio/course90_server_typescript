@@ -11,24 +11,34 @@ import mockRoutes from "./routes/mcq/mockQroute";
 import feedRoutes from "./routes/mcq/feedQRoute";
 import notesRoutes from "./routes/mcq/notesRoute";
 import studentRoutes from "./routes/auth/studentRoutes";
+import corsOptions from "./config/corsOptions";
 
 // Create Express application
 const app: Application = express();
-// Load environment variables
 dotenv.config();
 
 const PORT = process.env.PORT || 8080;
+
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Health check endpoint (add this before other routes)
 app.get("/", (req: Request, res: Response) => {
-  res.send("server is ready");
+  res.status(200).send("server is ready");
+});
+app.get("/_ah/health", (req: Request, res: Response) => {
+  res.status(200).send("server is ready");
+});
+app.get("/_ah/start", (req: Request, res: Response) => {
+  res.status(200).send("OK");
+});
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
 });
 app.listen(PORT, () => {
   console.log(`Listening to http://localhost:${PORT}`);
 });
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/institute", instituteRoutes);
 app.use("/api/course", courseRoutes);
@@ -44,9 +54,10 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ error: "Something went wrong!" });
 });
-// Connect to MongoDB
-connectDB();
 
 // Centralized Error Handler
 app.use(routeNotFound);
 app.use(errorHandler);
+
+// Connect to MongoDB
+connectDB();
