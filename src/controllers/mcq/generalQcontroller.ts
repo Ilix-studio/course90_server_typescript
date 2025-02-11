@@ -62,12 +62,17 @@ export const createGeneralQuestions = asyncHandler(
       mcqs: [],
     });
 
-    const savedQuestionSet = await generalQuestionSet.save();
+    const savedGQuestionSet = await generalQuestionSet.save();
+    if (!savedGQuestionSet) {
+      res.status(404);
+      throw new Error("Failed to save the data in the database");
+    }
 
     res.status(201).json({
       success: true,
       message: "General question set created successfully",
-      data: savedQuestionSet,
+      generalQSetId: savedGQuestionSet._id,
+      data: savedGQuestionSet,
     });
   }
 );
@@ -121,6 +126,7 @@ export const addMCQforGQ = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: "MCQ added successfully",
+    generalQSetId: generalQSetId,
     data: mcqData,
   });
 });
