@@ -28,15 +28,19 @@ interface PerformanceData {
 // Get all mock questions
 export const getMockQuestions = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const allQuestions = await MockMCQModel.find({}).populate(
-      "courseId",
-      "courseName description"
-    );
+    const allMQuestions = await MockMCQModel.find({});
+
+    if (!allMQuestions || allMQuestions.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "No questions found",
+      });
+    }
 
     res.status(200).json({
       success: true,
       message: "Mock questions fetched successfully",
-      data: allQuestions,
+      data: allMQuestions,
     });
   }
 );
