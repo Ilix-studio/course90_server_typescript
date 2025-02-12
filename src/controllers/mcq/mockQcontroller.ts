@@ -4,12 +4,6 @@ import asyncHandler from "express-async-handler";
 import { MockMCQModel } from "../../models/mcq/mockMCQ";
 import { Types } from "mongoose";
 
-interface PerformanceData {
-  timeTaken?: number;
-  attempts?: number;
-  marks?: number;
-}
-
 interface MCQBody {
   questionName: string;
   options: string[];
@@ -18,11 +12,17 @@ interface MCQBody {
 }
 
 interface MockQuestionBody {
+  courseId: string;
   subject: string;
   language: string;
+  duration: number;
   totalMarks: number;
   passingMarks: number;
-  courseId: string;
+}
+interface PerformanceData {
+  timeTaken?: number;
+  attempts?: number;
+  marks?: number;
 }
 
 // Get all mock questions
@@ -45,15 +45,23 @@ export const getMockQuestions = asyncHandler(
 export const createMockQuestions = asyncHandler(
   async (req: Request, res: Response) => {
     const {
+      courseId,
       subject,
       language,
+      duration,
       totalMarks,
       passingMarks,
-      courseId,
     }: MockQuestionBody = req.body;
 
     // Validate required fields
-    if (!subject || !language || !totalMarks || !passingMarks || !courseId) {
+    if (
+      !courseId ||
+      !subject ||
+      !language ||
+      !totalMarks ||
+      !passingMarks ||
+      !duration
+    ) {
       res.status(400);
       throw new Error("All fields are required");
     }
@@ -74,17 +82,22 @@ export const createMockQuestions = asyncHandler(
       subject,
       language,
       totalMarks,
+      duration,
       passingMarks,
-      courseId,
+      course: courseId,
       mcqs: [],
     });
 
-    const savedQuestionSet = await mockQuestionSet.save();
-
+    const savedMQuestionSet = await mockQuestionSet.save();
+    if (!savedMQuestionSet) {
+      res.status(404);
+      throw new Error("Failed to save the data in the database");
+    }
     res.status(201).json({
       success: true,
       message: "Mock question set created successfully",
-      data: savedQuestionSet,
+      mockQSetId: savedMQuestionSet._id,
+      data: savedMQuestionSet,
     });
   }
 );

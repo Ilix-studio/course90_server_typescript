@@ -44,8 +44,8 @@ export const submitMockMCQ = asyncHandler(
     });
 
     const submission = await SubmissionModel.create({
-      institute: mockTest.courseId,
-      course: mockTest.courseId,
+      institute: mockTest.course,
+      course: mockTest.course,
       type: "MQ",
       questionSet: questionSetId,
       answers: processedAnswers,

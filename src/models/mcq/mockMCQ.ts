@@ -42,31 +42,47 @@ const performanceMCQSchema = new Schema({
 });
 
 interface MockMCQ extends Document {
+  course: Schema.Types.ObjectId;
   subject: string;
   language: string;
   totalMarks: number;
+  duration: number;
   passingMarks: number;
   mcqs: PerformanceMCQSchema[];
-  courseId: Schema.Types.ObjectId;
 }
-const mockMcqSchema = new Schema<MockMCQ>({
-  subject: {
-    type: String,
-    required: true,
+const mockMcqSchema = new Schema<MockMCQ>(
+  {
+    course: {
+      type: Schema.Types.ObjectId,
+      ref: "Course",
+      required: [true, "Course is required"],
+    },
+    subject: {
+      type: String,
+      required: [true, "Subject is required"],
+      trim: true,
+    },
+    language: {
+      type: String,
+      required: [true, "Language is required"],
+      trim: true,
+    },
+    duration: {
+      type: Number,
+      required: [true, "Duration is required"],
+    },
+    totalMarks: {
+      type: Number,
+      required: [true, "Total Marks is required"],
+    },
+    passingMarks: {
+      type: Number,
+      required: [true, "Passing Marks is required"],
+    },
+    mcqs: [performanceMCQSchema],
   },
-  language: {
-    type: String,
-    required: true,
-  },
-  totalMarks: {
-    type: Number,
-    required: true,
-  },
-  passingMarks: {
-    type: Number,
-    required: true,
-  },
-  mcqs: [performanceMCQSchema],
-  courseId: { type: Schema.Types.ObjectId, ref: "Course", required: true },
-});
+  {
+    timestamps: true,
+  }
+);
 export const MockMCQModel = model<MockMCQ>("MockMCQ", mockMcqSchema);
