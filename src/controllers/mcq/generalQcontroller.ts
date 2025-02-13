@@ -19,9 +19,9 @@ interface GeneralQuestionBody {
 // Get all general questions
 export const getGeneralQuestions = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const allQuestions = await GeneralMCQModel.find({});
+    const allGQuestions = await GeneralMCQModel.find({});
 
-    if (!allQuestions || allQuestions.length === 0) {
+    if (!allGQuestions || allGQuestions.length === 0) {
       res.status(404).json({
         success: false,
         message: "No questions found",
@@ -31,7 +31,7 @@ export const getGeneralQuestions = asyncHandler(
     res.status(200).json({
       success: true,
       message: "Questions fetched successfully",
-      data: allQuestions,
+      data: allGQuestions,
     });
   }
 );

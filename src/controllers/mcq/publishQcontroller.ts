@@ -8,23 +8,23 @@ import { Types } from "mongoose";
 interface IPublishMockBody {
   courseId: string;
   subject: string;
+  language: string;
   title: string;
   publishedBy: string;
   mcqs: IMCQ[];
 }
 
-interface IFeedQuestionBody {
-  courseId: string;
-  subject: string;
-  title: string;
-}
-
 export const publishMockTest = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const { courseId, subject, title, publishedBy }: IPublishMockBody =
-      req.body;
+    const {
+      courseId,
+      subject,
+      language,
+      title,
+      publishedBy,
+    }: IPublishMockBody = req.body;
 
-    if (!courseId || !subject || !title) {
+    if (!courseId || !subject || !language || !title) {
       res.status(400);
       throw new Error("Please provide all required fields");
     }
@@ -32,6 +32,7 @@ export const publishMockTest = asyncHandler(
     const publishedMock = await PublishedMock.create({
       courseId,
       subject,
+      language,
       title,
       mcqs: [],
       publishedBy,
@@ -55,7 +56,7 @@ export const publishMockTest = asyncHandler(
 // );
 
 // Get all the Feed Question
-export const getFeedQuestions = asyncHandler(
+export const getPublishQuestions = asyncHandler(
   async (req: Request, res: Response) => {
     const { courseId, subject } = req.query;
 
@@ -81,9 +82,9 @@ export const getFeedQuestions = asyncHandler(
 );
 
 // create the Feed Question and insert MCQ form
-export const addMCQforFQ = asyncHandler(
+export const addMCQforPQ = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const { feedQSetId } = req.params;
+    const { publishQSetId } = req.params;
     const { questionName, options, correctOption }: IMCQ = req.body;
     const instituteId = req.institute?._id;
 
@@ -131,7 +132,7 @@ export const addMCQforFQ = asyncHandler(
       );
     }
 
-    const feedQuestion = await PublishedMock.findById(feedQSetId);
+    const feedQuestion = await PublishedMock.findById(publishQSetId);
 
     if (!feedQuestion) {
       res.status(404);
@@ -157,12 +158,12 @@ export const addMCQforFQ = asyncHandler(
 );
 
 // update the Feed Question
-export const updateFQ = asyncHandler(
+export const updatePQ = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const { feedQSetId } = req.params;
+    const { publishQSetId } = req.params;
     const updates = req.body;
 
-    const feedQuestion = await PublishedMock.findById(feedQSetId);
+    const feedQuestion = await PublishedMock.findById(publishQSetId);
 
     if (!feedQuestion) {
       res.status(404);
@@ -176,7 +177,7 @@ export const updateFQ = asyncHandler(
     // }
 
     const updatedFeedQuestion = await PublishedMock.findByIdAndUpdate(
-      feedQSetId,
+      publishQSetId,
       updates,
       { new: true, runValidators: true }
     );
@@ -190,13 +191,13 @@ export const updateFQ = asyncHandler(
 );
 
 // update  MCQ form
-export const updateFQ_MCQ = asyncHandler(
+export const updatePQ_MCQ = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const { feedQSetId } = req.params;
+    const { publishQSetId } = req.params;
     const { mcqId } = req.query;
     const updates: Partial<IMCQ> = req.body;
 
-    const feedQuestion = await PublishedMock.findById(feedQSetId);
+    const feedQuestion = await PublishedMock.findById(publishQSetId);
 
     if (!feedQuestion) {
       res.status(404);
@@ -229,11 +230,11 @@ export const updateFQ_MCQ = asyncHandler(
 );
 
 // delete the Feed Question
-export const deleteFQ = asyncHandler(
+export const deletePQ = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const { feedQSetId } = req.params;
+    const { publishQSetId } = req.params;
 
-    const feedQuestion = await PublishedMock.findById(feedQSetId);
+    const feedQuestion = await PublishedMock.findById(publishQSetId);
 
     if (!feedQuestion) {
       res.status(404);
@@ -246,7 +247,7 @@ export const deleteFQ = asyncHandler(
       throw new Error("Not authorized to delete this feed question");
     }
 
-    await PublishedMock.findByIdAndDelete(feedQSetId);
+    await PublishedMock.findByIdAndDelete(publishQSetId);
 
     res.status(200).json({
       success: true,

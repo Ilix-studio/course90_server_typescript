@@ -8,7 +8,7 @@ import courseRoutes from "./routes/courses/courseRoutes";
 import profileRoutes from "./routes/profile/profileRoutes";
 import generalRoutes from "./routes/mcq/generalQRoute";
 import mockRoutes from "./routes/mcq/mockQroute";
-import feedRoutes from "./routes/mcq/feedQRoute";
+import publishRoutes from "./routes/mcq/publishQRoute";
 import notesRoutes from "./routes/mcq/notesRoute";
 import studentRoutes from "./routes/auth/studentRoutes";
 import corsOptions from "./config/corsOptions";
@@ -45,7 +45,7 @@ app.use("/api/course", courseRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/GQ", generalRoutes);
 app.use("/api/MQ", mockRoutes);
-app.use("/api/FQ", feedRoutes);
+app.use("/api/PQ", publishRoutes);
 app.use("/api/notes", notesRoutes);
 app.use("/api/student", studentRoutes);
 

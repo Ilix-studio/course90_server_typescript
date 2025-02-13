@@ -1,12 +1,12 @@
 import { protectAccess } from "../../middlware/authMiddleware";
 import {
-  addMCQforFQ,
-  deleteFQ,
-  getFeedQuestions,
+  addMCQforPQ,
+  deletePQ,
+  getPublishQuestions,
   publishMockTest,
-  updateFQ,
-  updateFQ_MCQ,
-} from "../../controllers/mcq/feedQcontroller";
+  updatePQ,
+  updatePQ_MCQ,
+} from "../../controllers/mcq/publishQcontroller";
 import express from "express";
 
 const router = express.Router();
@@ -15,19 +15,23 @@ const router = express.Router();
 router.post("/publish", protectAccess, publishMockTest);
 
 // Get all the Feed Question
-router.get("/get-feedQ", protectAccess, getFeedQuestions);
+router.get("/get-feedQ", protectAccess, getPublishQuestions);
 
 // create the Feed Question and insert MCQ form
-router.post("/add-FQ/:feedQSetId", protectAccess, addMCQforFQ);
+router.post("/add-FQ/:publishQSetId", protectAccess, addMCQforPQ);
 
 // update the Feed Question
-router.patch("/updateFQ/:feedQSetId", protectAccess, updateFQ);
+router.patch("/updateFQ/:publishQSetId", protectAccess, updatePQ);
 
 // update  MCQ form
-router.patch("/updateFQ/:feedQSetId/mcq/:mcqId", protectAccess, updateFQ_MCQ);
+router.patch(
+  "/updateFQ/:publishQSetId/mcq/:mcqId",
+  protectAccess,
+  updatePQ_MCQ
+);
 
 // delete the Feed Question
-router.delete("/deleteFQ/:feedQSetId", protectAccess, deleteFQ);
+router.delete("/deleteFQ/:publishQSetId", protectAccess, deletePQ);
 
 export default router;
 
