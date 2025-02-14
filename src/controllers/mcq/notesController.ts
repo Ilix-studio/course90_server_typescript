@@ -13,7 +13,7 @@ interface CreateNoteRequest extends AuthenticatedRequest {
 
 interface UpdateNoteRequest extends AuthenticatedRequest {
   params: {
-    id: string;
+    noteSetId: string;
   };
   body: {
     title?: string;
@@ -24,15 +24,13 @@ interface UpdateNoteRequest extends AuthenticatedRequest {
 
 interface DeleteNoteRequest extends AuthenticatedRequest {
   params: {
-    id: string;
+    noteSetId: string;
   };
 }
 
 // Get all the Notes Question
 export const getNotes = asyncHandler(async (req: Request, res: Response) => {
-  const notes = await LongNoteModel.find()
-    .populate("course", "courseName")
-    .sort({ createdAt: -1 });
+  const notes = await LongNoteModel.find().sort({ createdAt: -1 });
 
   if (!notes || notes.length === 0) {
     res.status(404);
@@ -66,6 +64,7 @@ export const createNotes = asyncHandler(
     res.status(201).json({
       success: true,
       message: "Note created successfully",
+      noteSetId: newNote._id,
       data: newNote,
     });
   }
@@ -74,10 +73,10 @@ export const createNotes = asyncHandler(
 // update the Notes Question
 export const updateNotes = asyncHandler(
   async (req: UpdateNoteRequest, res: Response) => {
-    const { id } = req.params;
+    const { noteSetId } = req.params;
     const updateData = req.body;
 
-    const note = await LongNoteModel.findById(id);
+    const note = await LongNoteModel.findById(noteSetId);
 
     if (!note) {
       res.status(404);
@@ -86,7 +85,7 @@ export const updateNotes = asyncHandler(
 
     // Update only provided fields
     const updatedNote = await LongNoteModel.findByIdAndUpdate(
-      id,
+      noteSetId,
       { $set: updateData },
       { new: true }
     );
@@ -107,15 +106,15 @@ export const updateNotes = asyncHandler(
 // delete the Notes Question
 export const deleteNotes = asyncHandler(
   async (req: DeleteNoteRequest, res: Response) => {
-    const { id } = req.params;
-    const note = await LongNoteModel.findById(id);
+    const { noteSetId } = req.params;
+    const note = await LongNoteModel.findById(noteSetId);
 
     if (!note) {
       res.status(404);
       throw new Error("Note not found");
     }
 
-    await LongNoteModel.findByIdAndDelete(id);
+    await LongNoteModel.findByIdAndDelete(noteSetId);
 
     res.status(200).json({
       success: true,

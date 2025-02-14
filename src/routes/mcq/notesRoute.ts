@@ -15,10 +15,10 @@ router.get("/get-notes", protectAccess, getNotes);
 router.post("/create-notes", protectAccess, createNotes);
 
 // update the Notes Question
-router.patch("/updateNotes/:id", protectAccess, updateNotes);
+router.patch("/updateNotes/:noteSetId", protectAccess, updateNotes);
 
 // delete the Notes Question
-router.delete("/deleteNotes/:id", protectAccess, deleteNotes);
+router.delete("/deleteNotes/:noteSetId", protectAccess, deleteNotes);
 
 export default router;
 
