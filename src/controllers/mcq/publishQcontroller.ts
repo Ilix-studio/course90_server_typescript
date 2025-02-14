@@ -28,6 +28,11 @@ export const publishMockTest = asyncHandler(
       res.status(400);
       throw new Error("Please provide all required fields");
     }
+    // Validate courseId format
+    if (!Types.ObjectId.isValid(courseId)) {
+      res.status(400);
+      throw new Error("Invalid course ID format");
+    }
 
     const publishedMock = await PublishedMock.create({
       courseId,
@@ -46,6 +51,7 @@ export const publishMockTest = asyncHandler(
     res.status(201).json({
       success: true,
       message: "Mock test published successfully",
+      publishQSetId: publishedMock._id,
       data: publishedMock,
     });
   }
@@ -87,6 +93,12 @@ export const addMCQforPQ = asyncHandler(
     const { publishQSetId } = req.params;
     const { questionName, options, correctOption }: IMCQ = req.body;
     const instituteId = req.institute?._id;
+
+    // Validate ObjectId format
+    if (!Types.ObjectId.isValid(publishQSetId)) {
+      res.status(400);
+      throw new Error("Invalid question set ID format");
+    }
 
     if (!instituteId) {
       res.status(401);
@@ -151,6 +163,7 @@ export const addMCQforPQ = asyncHandler(
     res.status(200).json({
       success: true,
       message: "MCQ added successfully",
+      publishQSetId: publishQSetId,
       questionsRemainingThisWeek: 10 - (weeklyQuestionCount + 1),
       data: feedQuestion,
     });

@@ -15,23 +15,23 @@ const router = express.Router();
 router.post("/publish", protectAccess, publishMockTest);
 
 // Get all the Feed Question
-router.get("/get-feedQ", protectAccess, getPublishQuestions);
+router.get("/get-publishQ", protectAccess, getPublishQuestions);
 
 // create the Feed Question and insert MCQ form
-router.post("/add-FQ/:publishQSetId", protectAccess, addMCQforPQ);
+router.post("/add-PQ/:publishQSetId", protectAccess, addMCQforPQ);
 
 // update the Feed Question
-router.patch("/updateFQ/:publishQSetId", protectAccess, updatePQ);
+router.patch("/updatePQ/:publishQSetId", protectAccess, updatePQ);
 
 // update  MCQ form
 router.patch(
-  "/updateFQ/:publishQSetId/mcq/:mcqId",
+  "/updatePQ/:publishQSetId/mcq/:mcqId",
   protectAccess,
   updatePQ_MCQ
 );
 
 // delete the Feed Question
-router.delete("/deleteFQ/:publishQSetId", protectAccess, deletePQ);
+router.delete("/deletePQ/:publishQSetId", protectAccess, deletePQ);
 
 export default router;
 
