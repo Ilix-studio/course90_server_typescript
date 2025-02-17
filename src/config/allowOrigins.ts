@@ -12,8 +12,9 @@ const allowOrigins = [
   "http://localhost:5173/forgotPassword",
   "http://localhost:5173/signin",
   "http://localhost:5173/signup",
-  "https://course90-wafilix-916943050871.asia-south1.run.app/signin",
-  "https://course90-wafilix-916943050871.asia-south1.run.app",
-  "https://course90-wafilix-916943050871.asia-south1.run.app/signup",
+  "https://course90-wafilix-916943050871.asia-northeast1.run.app",
+  "https://course90-wafilix-916943050871.asia-northeast1.run.app/signin",
+  "https://course90.in",
+  "https://course90.in/signin",
 ];
 export default allowOrigins;
