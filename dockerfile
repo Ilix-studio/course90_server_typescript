@@ -1,42 +1,27 @@
-# Build stage
-FROM node:20-alpine AS builder
+# Use Node.js 20 as the base image
+FROM node:20-slim
 
 # Set working directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
-# Copy source code
-COPY . .
+# Copy source code and config files
+COPY tsconfig.json ./
+COPY src/ ./src/
 
-# Build TypeScript code
+# Build TypeScript
 RUN npm run build
 
-# Production stage
-FROM node:20-alpine
-
-# Set working directory
-WORKDIR /usr/src/app
-
-# Copy package files
-COPY package*.json ./
-
-# Install only production dependencies
-RUN npm ci --only=production
-
-# Copy built assets from builder stage
-COPY --from=builder /usr/src/app/dist ./dist
-
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=8080
+# Remove development dependencies
+RUN npm prune --production
 
 # Expose port
 EXPOSE 8080
 
-# Start the server
+# Start the application
 CMD ["node", "dist/server.js"]
