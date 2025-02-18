@@ -77,8 +77,7 @@ jobs:
             --set-env-vars "RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }}" \
             --set-env-vars "RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }}" \
             --set-env-vars "merchant_account_id=${{ secrets.MERCHANT_ACCOUNT_ID }}" \
-            --set-env-vars "NODE_ENV=production" \
-            --set-env-vars "PORT=8080"
+            --set-env-vars "NODE_ENV=production"
 
       - name: Show Output
         run: |
