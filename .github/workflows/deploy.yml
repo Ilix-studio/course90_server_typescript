@@ -66,12 +66,19 @@ jobs:
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
+            --port 8080 \
+            --timeout 300 \
+            --memory 512Mi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 10 \
             --set-env-vars "MONGO_URI=${{ secrets.MONGO_URI }}" \
             --set-env-vars "ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}" \
             --set-env-vars "RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }}" \
             --set-env-vars "RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }}" \
             --set-env-vars "merchant_account_id=${{ secrets.MERCHANT_ACCOUNT_ID }}" \
-            --set-env-vars "NODE_ENV=production"
+            --set-env-vars "NODE_ENV=production" \
+            --set-env-vars "PORT=8080"
 
       - name: Show Output
         run: |

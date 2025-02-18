@@ -1,7 +1,6 @@
 # Build stage
 FROM node:20-slim AS builder
 
-# Set working directory
 WORKDIR /usr/src/app
 
 # Copy package files
@@ -33,8 +32,22 @@ COPY --from=builder /usr/src/app/dist ./dist
 ENV NODE_ENV=production
 ENV PORT=8080
 
+# Create a non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nodejs
+
+# Set ownership to non-root user
+RUN chown -R nodejs:nodejs /usr/src/app
+
+# Switch to non-root user
+USER nodejs
+
 # Expose port
 EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost:8080/ || exit 1
 
 # Start the application
 CMD ["node", "dist/server.js"]
