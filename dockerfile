@@ -1,7 +1,7 @@
 # Build stage
 FROM node:20-slim AS builder
 
-WORKDIR /usr/src/app
+WORKDIR /usr/src
 
 # Copy package files
 COPY package*.json ./
@@ -45,9 +45,7 @@ USER nodejs
 # Expose port
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD curl -f http://localhost:8080/ || exit 1
+
 
 # Start the application
 CMD ["node", "dist/server.js"]
