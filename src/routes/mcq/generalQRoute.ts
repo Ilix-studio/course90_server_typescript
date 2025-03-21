@@ -3,6 +3,7 @@ import {
   createGeneralQuestions,
   deleteGQ,
   getGeneralQuestions,
+  getGQbyID,
   updateGQ,
   updateGQ_MCQ,
 } from "../../controllers/mcq/generalQcontroller";
@@ -12,6 +13,9 @@ const router = express.Router();
 
 // Get all the General Question
 router.get("/get-generalQ", protectAccess, getGeneralQuestions);
+
+//Get General Question By ID
+router.get("/get-generalQ/:generalQSetId", protectAccess, getGQbyID);
 
 // create the General Question
 router.post("/create-generalQuestions", protectAccess, createGeneralQuestions);

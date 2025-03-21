@@ -35,6 +35,23 @@ export const getGeneralQuestions = asyncHandler(
     });
   }
 );
+//Get General Question by Id
+export const getGQbyID = asyncHandler(async (req: Request, res: Response) => {
+  const { generalQSetId } = req.params;
+  // Find the General Question Set by ID
+  const generalQuestionSet = await GeneralMCQModel.findById(generalQSetId);
+  // Check if the question set exists
+  if (!generalQuestionSet) {
+    res.status(404);
+    throw new Error("General Question Set not found");
+  }
+
+  // Return the found question set
+  res.status(200).json({
+    success: true,
+    data: generalQuestionSet,
+  });
+});
 
 // Create general question set
 export const createGeneralQuestions = asyncHandler(
