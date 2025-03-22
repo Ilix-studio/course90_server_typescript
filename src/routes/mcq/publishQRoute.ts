@@ -2,6 +2,7 @@ import { protectAccess } from "../../middlware/authMiddleware";
 import {
   addMCQforPQ,
   deletePQ,
+  getPQbyID,
   getPublishQuestions,
   publishMockTest,
   updatePQ,
@@ -13,6 +14,9 @@ const router = express.Router();
 
 // Instute can publish and student will fetch in mobile apps
 router.post("/publish", protectAccess, publishMockTest);
+
+//Get Publish/Feed Question By ID
+router.get("/get-publishQ/:publishQSetId", protectAccess, getPQbyID);
 
 // Get all the Feed Question
 router.get("/get-publishQ", protectAccess, getPublishQuestions);

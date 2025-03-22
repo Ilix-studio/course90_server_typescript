@@ -3,6 +3,7 @@ import {
   createMockQuestions,
   deleteMQ,
   getMockQuestions,
+  getMQbyID,
   updateMQ,
   updateMQ_MCQ,
 } from "../../controllers/mcq/mockQcontroller";
@@ -12,6 +13,9 @@ const router = express.Router();
 
 // Get all the Mock Question
 router.get("/get-mockQ", protectAccess, getMockQuestions);
+
+//Get Mock Question By ID
+router.get("/get-mockQ/:mockQSetId", protectAccess, getMQbyID);
 
 // create the Mock Question
 router.post("/create-mockQuestions", protectAccess, createMockQuestions);

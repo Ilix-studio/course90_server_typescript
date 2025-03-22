@@ -13,7 +13,7 @@ interface IPublishMockBody {
   publishedBy: string;
   mcqs: IMCQ[];
 }
-
+// create the Feed/Publish Question
 export const publishMockTest = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     const {
@@ -86,6 +86,20 @@ export const getPublishQuestions = asyncHandler(
     });
   }
 );
+
+export const getPQbyID = asyncHandler(async (req: Request, res: Response) => {
+  const { publishQSetId } = req.params;
+  const publishQuestionSet = await PublishedMock.findById(publishQSetId);
+  if (!publishQuestionSet) {
+    res.status(404);
+    throw new Error("Publish Question Set not found");
+  }
+  //Return the found question set
+  res.status(200).json({
+    success: true,
+    data: publishQuestionSet,
+  });
+});
 
 // create the Feed Question and insert MCQ form
 export const addMCQforPQ = asyncHandler(

@@ -45,6 +45,23 @@ export const getMockQuestions = asyncHandler(
   }
 );
 
+// Get Mock Question by Id
+export const getMQbyID = asyncHandler(async (req: Request, res: Response) => {
+  const { mockQSetId } = req.params;
+  // Find the General Question Set by ID
+  const mockQuestionSet = await MockMCQModel.findById(mockQSetId);
+  //Check if the question set Exists
+  if (!mockQuestionSet) {
+    res.status(404);
+    throw new Error("Mock Question Set not found");
+  }
+  // Return the found question set
+  res.status(200).json({
+    success: true,
+    data: mockQuestionSet,
+  });
+});
+
 // Create mock question set
 export const createMockQuestions = asyncHandler(
   async (req: Request, res: Response) => {
