@@ -40,4 +40,4 @@ router.delete("/deletePQ/:publishQSetId", protectAccess, deletePQ);
 export default router;
 
 // Student can without auth
-// http://localhost:8080/api/FQ/publish
+// http://localhost:8080/api/FQ/deletePQ/:publishQSetId

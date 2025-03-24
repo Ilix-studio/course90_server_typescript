@@ -257,29 +257,31 @@ export const updatePQ_MCQ = asyncHandler(
 );
 
 // delete the Feed Question
-export const deletePQ = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const { publishQSetId } = req.params;
+export const deletePQ = asyncHandler(async (req: Request, res: Response) => {
+  const { publishQSetId } = req.params;
 
-    const feedQuestion = await PublishedMock.findById(publishQSetId);
+  const feedQuestion = await PublishedMock.findById(publishQSetId);
 
-    if (!feedQuestion) {
-      res.status(404);
-      throw new Error("Feed question not found");
-    }
-
-    // Verify institute ownership
-    if (feedQuestion.instituteId.toString() !== req.institute?._id.toString()) {
-      res.status(403);
-      throw new Error("Not authorized to delete this feed question");
-    }
-
-    await PublishedMock.findByIdAndDelete(publishQSetId);
-
-    res.status(200).json({
-      success: true,
-      message: "Feed question deleted successfully",
-      data: null,
-    });
+  if (!feedQuestion) {
+    res.status(404);
+    throw new Error("Feed question not found");
   }
-);
+
+  // Check if there are 6 or more MCQs
+  if (feedQuestion.mcqs.length >= 6) {
+    res.status(403).json({
+      success: false,
+      message: "Cannot delete question set with 6 or more questions",
+    });
+    return;
+  }
+
+  // Delete the question set
+  await feedQuestion.deleteOne();
+
+  res.status(200).json({
+    success: true,
+    message: "Feed question deleted successfully",
+    data: null,
+  });
+});

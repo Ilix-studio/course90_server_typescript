@@ -48,4 +48,4 @@ export default router;
 
 //Short notes, long Notes,
 
-// http://localhost:8080/api/notes/create-notes
+// http://localhost:8080/api/notes/deleteNotes/:noteSetId

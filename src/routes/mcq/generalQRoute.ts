@@ -34,7 +34,7 @@ router.patch(
 );
 
 // delete the General Question
-router.delete("/deleteGQ/:id", protectAccess, deleteGQ);
+router.delete("/deleteGQ/:generalQSetId", protectAccess, deleteGQ);
 
 export default router;
 

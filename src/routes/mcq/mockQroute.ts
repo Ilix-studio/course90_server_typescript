@@ -30,8 +30,8 @@ router.patch("/updateMQ/:mockQSetId", protectAccess, updateMQ);
 router.patch("/updateMQ/:mockQSetId/mcq/:mcqId", protectAccess, updateMQ_MCQ);
 
 // delete the Mock Question
-router.delete("/deleteMQ/:id", protectAccess, deleteMQ);
+router.delete("/deleteMQ/:mockQSetId", protectAccess, deleteMQ);
 
 export default router;
 
-// http://localhost:8080/api/MQ/create-mockQuestions
+// http://localhost:8080/api/MQ//deleteMQ/:mockQSetId

@@ -283,14 +283,24 @@ export const deleteGQ = asyncHandler(async (req: Request, res: Response) => {
     throw new Error("Invalid question set ID format");
   }
 
-  const deletedQuestionSet = await GeneralMCQModel.findByIdAndDelete(
-    generalQSetId
-  );
+  // First find the question set to check MCQ count
+  const questionSet = await GeneralMCQModel.findById(generalQSetId);
 
-  if (!deletedQuestionSet) {
+  if (!questionSet) {
     res.status(404);
     throw new Error("Question set not found");
   }
+
+  // Check if there are less than 6 MCQs
+  if (questionSet.mcqs.length >= 6) {
+    res.status(403).json({
+      success: false,
+      message: "Cannot delete question set with 6 or more questions",
+    });
+  }
+
+  // Delete the question set
+  await questionSet.deleteOne();
 
   res.status(200).json({
     success: true,

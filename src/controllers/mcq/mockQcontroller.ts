@@ -126,8 +126,7 @@ export const createMockQuestions = asyncHandler(
 // Add MCQ to mock question set
 export const addMCQforMQ = asyncHandler(async (req: Request, res: Response) => {
   const { mockQSetId } = req.params;
-  const { questionName, options, correctOption, performanceData }: MCQBody =
-    req.body;
+  const { questionName, options, correctOption }: MCQBody = req.body;
 
   // Validate ObjectId
   if (!Types.ObjectId.isValid(mockQSetId)) {
@@ -164,7 +163,6 @@ export const addMCQforMQ = asyncHandler(async (req: Request, res: Response) => {
     questionName,
     options,
     correctOption,
-    ...(performanceData && { performanceData }),
   };
 
   questionSet.mcqs.push(newMCQ as any);
@@ -321,19 +319,28 @@ export const updateMQ_MCQ = asyncHandler(
 
 // Delete mock question set
 export const deleteMQ = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { mockQSetId } = req.params;
 
-  if (!Types.ObjectId.isValid(id)) {
+  if (!Types.ObjectId.isValid(mockQSetId)) {
     res.status(400);
     throw new Error("Invalid question set ID format");
   }
 
-  const deletedSet = await MockMCQModel.findByIdAndDelete(id);
+  const deletedSet = await MockMCQModel.findById(mockQSetId);
 
   if (!deletedSet) {
     res.status(404);
     throw new Error("Mock question set not found");
   }
+  // Check if there are less than 6 MCQs
+  if (deletedSet.mcqs.length >= 6) {
+    res.status(403).json({
+      success: false,
+      message: "Cannot delete question set with 6 or more questions",
+    });
+  }
+  // Delete the question set
+  await deletedSet.deleteOne();
 
   res.status(200).json({
     success: true,
