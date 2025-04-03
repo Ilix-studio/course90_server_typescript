@@ -1,23 +1,25 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
+
+interface PasscodeEntry {
+  passkey: string;
+  institute: Types.ObjectId;
+  course: Types.ObjectId;
+  isActive: boolean;
+  activatedAt?: Date;
+  expiresAt?: Date;
+  timePeriod?: string;
+}
 
 interface Student extends Document {
-  instituteName: Schema.Types.ObjectId;
-  passcode: {
-    passkey: string; // Passkey provided by the institute
-    institute: Schema.Types.ObjectId; // Reference to the institute
-    course: Schema.Types.ObjectId; // Reference to the course
-    isActive: boolean; // Indicates if this passkey is currently active
-  }[];
+  passcode: PasscodeEntry[];
+  deviceId: string;
   performance: {
-    courseId: Schema.Types.ObjectId;
+    courseId: Types.ObjectId;
     scores: number[];
   }[];
-
-  deviceId: string;
 }
 
 const studentSchema = new Schema<Student>({
-  instituteName: { type: Schema.Types.ObjectId },
   passcode: [
     {
       passkey: { type: String, required: true },
@@ -28,6 +30,9 @@ const studentSchema = new Schema<Student>({
       },
       course: { type: Schema.Types.ObjectId, ref: "Course", required: true },
       isActive: { type: Boolean, default: false },
+      activatedAt: { type: Date },
+      expiresAt: { type: Date },
+      timePeriod: { type: String },
     },
   ],
   deviceId: { type: String, required: true },

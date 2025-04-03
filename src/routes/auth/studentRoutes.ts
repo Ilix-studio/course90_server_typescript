@@ -44,15 +44,3 @@ router.post("/mcq/MQ/submit", submitMockMCQ);
 router.get("/performance/:courseId", getPerformance);
 
 export default router;
-
-// http://localhost:8080/studentlogin
-// http://localhost:8080/switch-account
-// http://localhost:8080/courses
-// http://localhost:8080/courses/:courseId/general-mcqs
-// http://localhost:8080/courses/:courseId/mock-mcqs
-// http://localhost:8080/courses/:courseId/notes
-// http://localhost:8080/feed
-// http://localhost:8080/mcq/publish/submit
-// http://localhost:8080/mcq/MQ/submit
-// http://localhost:8080/mcq/FQ/submit
-// http://localhost:8080/performance/:courseId
