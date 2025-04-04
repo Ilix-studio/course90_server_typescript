@@ -45,6 +45,8 @@ export interface IPasskey {
  */
 export interface IPasskeyDocument extends IPasskey, Document {
   _id: string;
+  isValid(): boolean;
+  getRemainingDays(): number;
 }
 
 /**
@@ -70,6 +72,7 @@ export interface ActivatePasskeyRequest {
 
   // Device ID of the student's device
   deviceId: string;
+  paymentId: string;
 }
 
 /**
