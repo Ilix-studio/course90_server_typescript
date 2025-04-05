@@ -30,7 +30,7 @@ export interface CreateOrderRequest {
 
 export interface VerifyPaymentRequest {
   orderId: string;
-  paymentId: string;
-  signature: string;
+  // paymentId: string;
+  // signature: string;
   passkeyId: string;
 }
