@@ -1,6 +1,7 @@
 // src/utils/nanoidGenerator.ts
-import { PASSKEY_ID_LENGTH } from "../constants/enums";
+
 import { customAlphabet } from "nanoid";
+import { PASSKEY_ID_LENGTH } from "../constants/enums";
 
 /**
  * Define the alphabet for passkey generation

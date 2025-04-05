@@ -6,10 +6,6 @@ import {
   updateCourses,
 } from "../../controllers/course/createCourse.controller";
 import { protectAccess } from "../../middlware/authMiddleware";
-import { generatePasskey } from "../../controllers/payment/passkeyControler";
-// import { createGeneralMCQ } from "../../controllers/mcq/generalQcontroller";
-// import { createMockMCQ } from "../../controllers/mcq/mockQcontroller";
-// import { createNote } from "../../controllers/mcq/notesController";
 
 // Add protectAccess
 
@@ -28,8 +24,5 @@ router.put("/updatecourse/:courseId", protectAccess, updateCourses);
 
 // delete Courses
 router.delete("/deleteCourse/:courseId", protectAccess, deleteCourses);
-
-// Generate a passkey for a course.
-router.post("/passkeys/generate", protectAccess, generatePasskey);
 
 export default router;
