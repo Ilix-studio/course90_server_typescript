@@ -11,7 +11,7 @@ import mockRoutes from "./routes/mcq/mockQroute";
 import publishRoutes from "./routes/mcq/publishQRoute";
 import notesRoutes from "./routes/mcq/notesRoute";
 import passkeyRoutes from "./routes/passkeys/passkeyRoutes";
-// import paymentRoutes from "./routes/payment/paymentRoutes";
+import paymentRoutes from "./routes/payment/paymentRoutes";
 import studentRoutes from "./routes/auth/studentRoutes";
 import corsOptions from "./config/corsOptions";
 
@@ -50,7 +50,7 @@ app.use("/api/MQ", mockRoutes);
 app.use("/api/PQ", publishRoutes);
 app.use("/api/notes", notesRoutes);
 app.use("/api/passkeys", passkeyRoutes);
-// app.use("/api/payments", paymentRoutes);
+app.use("/api/payments", paymentRoutes);
 app.use("/api/student", studentRoutes);
 
 // Error handling middleware
