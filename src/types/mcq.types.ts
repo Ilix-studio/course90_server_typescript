@@ -6,7 +6,12 @@ export interface IMCQ {
   options: string[];
   correctOption: number;
 }
-
+export interface CreateGeneralQuestionBody {
+  courseId: string; // Changed from courseName to courseId
+  subject: string;
+  language: string;
+  topic: string;
+}
 export interface IGeneralQuestionSet {
   instituteId: string;
   courseId: string;

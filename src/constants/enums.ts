@@ -12,6 +12,12 @@ export enum PasskeyStatus {
   REVOKED = "REVOKED",
   REVIVE = "REVIVE",
 }
+
+export enum InstituteType {
+  COACHING = "COACHING",
+  SCHOOL = "SCHOOL",
+  // TUTOR = "TUTOR"
+}
 // Duration options for passkey validity period (in months)
 export enum PasskeyDuration {
   ONE_MONTH = 1,
