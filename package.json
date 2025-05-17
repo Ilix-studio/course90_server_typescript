@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
-    "start": "node dist/server.js",
+    "start": " node dist/server.js",
     "server": "nodemon",
     "build": "tsc",
     "lint": "eslint . --ext .ts",
@@ -29,7 +29,7 @@
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
-    "nanoid": "^5.0.9",
+    "nanoid": "^3.3.4",
     "razorpay": "^2.9.5",
     "winston": "^3.17.0"
   },

@@ -10,7 +10,7 @@ const instituteSchema = new Schema<IInstituteDocument>(
     email: {
       type: String,
       required: true,
-      unique: true,
+
       lowercase: true,
       trim: true,
       match: [
@@ -20,7 +20,7 @@ const instituteSchema = new Schema<IInstituteDocument>(
     },
     phoneNumber: {
       type: Number,
-      unique: true,
+
       required: [true, "Phone number is required"],
     },
     password: {

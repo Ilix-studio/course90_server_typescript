@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import { PasskeyModel } from "../../models/passkeys/passkeyModel";
 import { PASSKEY_PRICING, PasskeyStatus } from "../../constants/enums";
-import { isValidPasskeyFormat } from "@/utils/nanoidGenerator";
+import { isValidPasskeyFormat } from "../../utils/nanoidGenerator";
 
 // Validate a passkey
 export const validatePasskey = asyncHandler(

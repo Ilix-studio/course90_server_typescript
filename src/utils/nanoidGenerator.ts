@@ -1,5 +1,3 @@
-// src/utils/nanoidGenerator.ts
-
 import { customAlphabet } from "nanoid";
 import { PASSKEY_ID_LENGTH } from "../constants/enums";
 
