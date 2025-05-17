@@ -1,11 +1,15 @@
-import { RegisterInstituteBody } from "../../types/auth.types";
+// controllers/auth/institutes.controller.ts
+import {
+  IInstituteDocument,
+  LoginInstituteBody,
+  RegisterInstituteBody,
+} from "../../types/auth.types";
 import { AuthenticatedRequest } from "../../types/request.types";
 import { Request, Response } from "express";
-import bcrypt from "bcryptjs";
 import { generateToken } from "../../utils/jwt.utils";
-
 import { InstituteAuth } from "../../models/auth/instituteModel";
 import asyncHandler from "express-async-handler";
+import logger from "../../utils/logger";
 
 export const registerInstitute = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -14,30 +18,43 @@ export const registerInstitute = asyncHandler(
       phoneNumber,
       email,
       password,
+      instituteType,
+      msmeNumber,
+      udiseNumber,
     }: RegisterInstituteBody = req.body;
-    if (!instituteName || !phoneNumber || !email || !password) {
+
+    // Validate required fields
+    if (
+      !instituteName ||
+      !phoneNumber ||
+      !email ||
+      !password ||
+      !instituteType
+    ) {
       res.status(400);
       throw new Error("Please add all fields");
     }
 
+    // Check if institute already exists
     const instituteExists = await InstituteAuth.findOne({ email });
     if (instituteExists) {
       res.status(400);
       throw new Error("Institute Already Exists");
     }
 
-    const salt = await bcrypt.genSalt(13);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
+    // Create the institute (password hashing is handled by pre-save hook)
     const newInstitute = await InstituteAuth.create({
       instituteName,
       phoneNumber,
       email,
-      password: hashedPassword,
+      password,
+      instituteType,
+      msmeNumber,
+      udiseNumber,
     });
 
     if (newInstitute) {
-      const token = generateToken(newInstitute._id.toString()); // Generate the token here
+      const token = generateToken(newInstitute._id.toString());
       res.status(201).json({
         success: true,
         data: {
@@ -54,10 +71,11 @@ export const registerInstitute = asyncHandler(
     }
   }
 );
+
 // Logic for institute login
 export const loginInstitute = asyncHandler(
   async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+    const { email, password } = req.body as LoginInstituteBody;
 
     // Validate input
     if (!email || !password) {
@@ -65,22 +83,26 @@ export const loginInstitute = asyncHandler(
       throw new Error("Please provide email and password");
     }
 
-    const instituteLogin = await InstituteAuth.findOne({ email });
+    // Find the institute and explicitly cast to IInstituteDocument
+    const instituteLogin = (await InstituteAuth.findOne({
+      email,
+    })) as IInstituteDocument;
     if (!instituteLogin) {
-      res.status(400);
-      throw new Error("Institute not found");
+      res.status(401);
+      throw new Error("Invalid email or password");
     }
 
-    const isPasswordCorrect = await bcrypt.compare(
-      password,
-      instituteLogin.password
-    );
-
+    // Use the comparePassword method from the document
+    const isPasswordCorrect = await instituteLogin.comparePassword(password);
     if (!isPasswordCorrect) {
-      res.status(400);
-      throw new Error("Invalid credentials");
+      res.status(401);
+      throw new Error("Invalid email or password");
     }
 
+    // Log successful login
+    logger.info(`Institute login successful: ${instituteLogin._id}`);
+
+    // Return user data with token
     res.json({
       _id: instituteLogin.id,
       instituteName: instituteLogin.instituteName,
@@ -93,7 +115,18 @@ export const loginInstitute = asyncHandler(
 
 // Logic for institute logout
 export const logoutInstitute = asyncHandler(
-  async (_req: Request, res: Response) => {
-    res.json({ message: "Logged out successfully" });
+  async (req: AuthenticatedRequest, res: Response) => {
+    // Log the logout event if institute is authenticated
+    if (req.institute) {
+      logger.info(`Institute logout: ${req.institute._id}`);
+    }
+
+    // Return success message instructing client to remove the token
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+      instructions:
+        "Please remove the authentication token from your client storage",
+    });
   }
 );

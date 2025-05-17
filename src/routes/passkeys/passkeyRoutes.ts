@@ -2,7 +2,7 @@ import {
   generatePasskeys,
   getInstitutePasskeys,
   getPasskeyDetails,
-  validatePasskey,
+  revokePasskey,
 } from "../../controllers/passkey/passkeyController";
 import { protectAccess } from "../../middlware/authMiddleware";
 
@@ -13,14 +13,14 @@ const router = express.Router();
 // Institute routes - generate passkeys (requires institute authentication)
 router.post("/generate-passkeys", protectAccess, generatePasskeys);
 
-//
+// Institute routes - get passkeys (requires institute authentication)
 router.get("/get-passkeys", protectAccess, getInstitutePasskeys);
 
-//
+//Institute routes - get passkey Details (requires institute authentication)
 router.get("/details/:passkeyId", protectAccess, getPasskeyDetails);
 
-// Public routes
-router.post("/validate", validatePasskey);
+// Institute routes - get passkey Details (requires institute authentication)
+router.post("/revoke", protectAccess, revokePasskey);
 
 // Student routes - activate a passkey
 // router.post("/activate-passkeys", activatePasskey);

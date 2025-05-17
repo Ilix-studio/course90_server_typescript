@@ -1,36 +1,41 @@
+// Update to auth.types.ts
 import { InstituteType } from "../constants/enums";
 import { Document, Types } from "mongoose";
 
-// This file defines all the TypeScript interfaces needed for your authentication system,
-
-export interface IInstitute extends Document {
+// Basic Institute interface without methods
+export interface IInstitute {
   _id: string;
   instituteName: string;
-  phoneNumber: number;
+  phoneNumber: number; // Note: Changed from string to number to match your schema
   email: string;
   password: string;
   instituteType: InstituteType;
   msmeNumber?: string; // For coaching institutes
   udiseNumber?: string; // For schools
-  // idCardPhoto?: string;         // For tutors
-  courses: Types.ObjectId[];
-  createdAt: Date;
-  updatedAt: Date;
+  courses?: Types.ObjectId[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
-export interface IInstituteModel extends IInstitute, Document {
+
+// Document interface that includes Mongoose methods
+export interface IInstituteDocument extends IInstitute, Document {
   _id: string;
   __v: number;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+export interface IInstituteModel extends IInstituteDocument {
+  // Any additional static methods would go here
 }
 
 export interface RegisterInstituteBody {
   instituteName: string;
-  phoneNumber: string;
+  phoneNumber: number; // Note: Changed from string to number
   email: string;
   password: string;
   instituteType: InstituteType;
   msmeNumber?: string;
   udiseNumber?: string;
-  // idCardPhoto?: string;
 }
 
 export interface LoginInstituteBody {
@@ -38,23 +43,21 @@ export interface LoginInstituteBody {
   password: string;
 }
 
-export interface IInstituteDocument extends IInstitute, Document {
-  _id: string;
-  comparePassword(candidatePassword: string): Promise<boolean>;
-}
-
 // Additional type for response data
 export interface IInstituteResponse {
   _id: string;
   instituteName: string;
-  phoneNumber: string;
+  phoneNumber: number; // Note: Changed from string to number
   email: string;
   token?: string;
+  message?: string;
 }
+
+// The rest of your type definitions...
 
 //Student Part
 export interface IStudentPasscode {
-  passkey: string;
+  passkeyId: string;
   instituteName: string;
   course: Types.ObjectId;
   isActive: boolean;

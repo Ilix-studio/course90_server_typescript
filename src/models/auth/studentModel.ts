@@ -5,7 +5,7 @@ import { IStudentModel, IStudentPasscode } from "../../types/auth.types";
 // Subdocument schema for passcodes (passkeys)
 const studentPasscodeSchema = new Schema({
   // The unique passkey identifier
-  passkey: {
+  passkeyId: {
     type: String,
     required: true,
   },
@@ -46,6 +46,10 @@ const studentSchema = new Schema<IStudentModel>(
     email: {
       type: String,
       sparse: true, // Allows multiple nulls but enforces uniqueness if provided
+      match: [
+        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+        "Please enter a valid email address",
+      ],
     },
 
     // Device identifier (required for security)

@@ -15,7 +15,9 @@ import {
 import {
   getPerformance,
   loginStudent,
+  renewPasskey,
   switchAccount,
+  validatePasskey,
 } from "../../controllers/auth/studentAuthcontroller";
 
 const router = express.Router();
@@ -23,6 +25,12 @@ const router = express.Router();
 // Student login with passkey
 router.post("/studentlogin", loginStudent);
 router.post("/switch-account", switchAccount);
+
+// Student routes
+router.post("/validate", validatePasskey);
+
+// Student Routes
+router.post("/renew", renewPasskey);
 
 // Get course content
 router.get("/courses");
