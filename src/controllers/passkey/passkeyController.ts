@@ -1,14 +1,12 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import asyncHandler from "express-async-handler";
 import { AuthenticatedRequest } from "../../types/request.types";
-import {
-  GeneratePasskeysRequest,
-  ValidatePasskeyRequest,
-} from "../../types/passkey.types";
+import { GeneratePasskeysRequest } from "../../types/passkey.types";
 import { CourseModel } from "../../models/course/courseModel";
 import { generateMultiplePasskeyIds } from "../../utils/nanoidGenerator";
 import { PasskeyStatus } from "../../constants/enums";
 import { PasskeyModel } from "../../models/passkeys/passkeyModel";
+import logger from "../../utils/logger";
 
 /**
  * Generate passkeys for a course
@@ -55,15 +53,21 @@ export const generatePasskeys = asyncHandler(
     }));
 
     // Save to database
-    await PasskeyModel.insertMany(passkeys);
+    try {
+      await PasskeyModel.insertMany(passkeys);
 
-    res.status(201).json({
-      success: true,
-      count,
-      passkeys: passkeyIds,
-      courseId,
-      courseName: course.name,
-    });
+      res.status(201).json({
+        success: true,
+        count,
+        passkeys: passkeyIds,
+        courseId,
+        courseName: course.name,
+      });
+    } catch (error) {
+      logger.error("Error generating passkeys:", error);
+      res.status(500);
+      throw new Error("Failed to generate passkeys");
+    }
   }
 );
 
@@ -119,6 +123,8 @@ export const getPasskeyDetails = asyncHandler(
       passkeyId,
       instituteId: req.institute,
     }).populate("courseId", "name");
+    // .populate("studentId", "name email")
+    // .populate("paymentId");
 
     if (!passkey) {
       res.status(404);
@@ -132,49 +138,36 @@ export const getPasskeyDetails = asyncHandler(
   }
 );
 
-// Validate a passkey
-export const validatePasskey = asyncHandler(
-  async (req: Request, res: Response) => {
-    // add instituteName, passkeyId, extract deviceId
-    const { passkeyId, deviceId }: ValidatePasskeyRequest = req.body;
-
-    if (!passkeyId || !deviceId) {
+export const revokePasskey = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const { passkeyId } = req.body;
+    // Validate request
+    if (!passkeyId) {
       res.status(400);
-      throw new Error("Passkey ID and device ID are required.");
+      throw new Error("Passkey ID is required");
     }
 
-    const passkey = await PasskeyModel.findOne({
-      passkeyId,
-      status: PasskeyStatus.ACTIVE,
-      expiresAt: { $gt: new Date() },
-    }).populate("courseId", "name");
+    // Find and update passkey
+    const passkey = await PasskeyModel.findOneAndUpdate(
+      {
+        passkeyId,
+        instituteId: req.institute?._id,
+      },
+      {
+        status: PasskeyStatus.REVOKED,
+      },
+      { new: true }
+    );
 
     if (!passkey) {
       res.status(404);
-      throw new Error("Invalid or expired passkey.");
+      throw new Error("Passkey not found");
     }
-
-    // If passkey is already bound to a device, check if it matches
-    if (passkey.deviceId && passkey.deviceId !== deviceId) {
-      res.status(403);
-      throw new Error("Passkey is already in use on another device.");
-    }
-
-    // Calculate remaining days
-    const remainingDays = passkey.getRemainingDays();
 
     res.json({
       success: true,
-      valid: true,
-      passkey: {
-        passkeyId: passkey.passkeyId,
-        courseId: passkey.courseId._id,
-        courseName: (passkey.courseId as any).name,
-        status: passkey.status,
-        durationMonths: passkey.durationMonths,
-        expiresAt: passkey.expiresAt,
-        remainingDays,
-      },
+      passkeyId: passkey.passkeyId,
+      status: passkey.status,
     });
   }
 );

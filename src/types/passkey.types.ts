@@ -3,6 +3,20 @@ import { Document, Types } from "mongoose";
 import { PasskeyStatus } from "../constants/enums";
 
 /**
+ * Interface for subscription history entries
+ */
+export interface ISubscriptionHistory {
+  _id?: Types.ObjectId;
+  startDate: Date;
+  endDate: Date;
+  durationMonths: number;
+  paymentId?: Types.ObjectId;
+  amount: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+/**
  * Interface representing the structure of a passkey in the database
  */
 export interface IPasskey {
@@ -38,6 +52,15 @@ export interface IPasskey {
 
   // Reference to the payment that activated this passkey
   paymentId?: Types.ObjectId;
+
+  // Track subscription history
+  subscriptionHistory?: ISubscriptionHistory[];
+
+  // Count of renewals
+  renewalCount?: number;
+
+  // Auto-renewal flag
+  autoRenewal?: boolean;
 }
 
 /**
@@ -45,8 +68,14 @@ export interface IPasskey {
  */
 export interface IPasskeyDocument extends IPasskey, Document {
   _id: string;
+  renew(
+    durationMonths: number,
+    paymentId: Types.ObjectId,
+    amount: number
+  ): Promise<IPasskeyDocument>;
   isValid(): boolean;
   getRemainingDays(): number;
+  isRenewable(): boolean;
 }
 
 /**
@@ -58,6 +87,20 @@ export interface GeneratePasskeysRequest {
 
   // Number of passkeys to generate
   count: number;
+}
+
+/**
+ * Interface for renew passkey request body
+ */
+export interface RenewPasskeyRequest {
+  // The passkey ID to renew
+  passkeyId: string;
+
+  // Duration in months for which to renew the passkey
+  durationMonths: number;
+
+  // Device ID of the student's device
+  deviceId: string;
 }
 
 /**
@@ -79,6 +122,8 @@ export interface ActivatePasskeyRequest {
  * Interface for validate passkey request body
  */
 export interface ValidatePasskeyRequest {
+  //Enter the instituteName
+  instituteName: string;
   // The passkey ID to validate
   passkeyId: string;
 
@@ -100,6 +145,9 @@ export interface PasskeyResponse {
   durationMonths: number;
   activatedAt?: Date;
   expiresAt?: Date;
+  renewalCount?: number;
+  remainingDays?: number;
+  isRenewable?: boolean;
 }
 
 /**
