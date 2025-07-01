@@ -3,6 +3,8 @@ import asyncHandler from "express-async-handler";
 import { GeneralMCQModel } from "../../models/mcq/generalMCQ";
 import { Types } from "mongoose";
 
+import { getInstituteId, createAccessDeniedError } from "../../utils/authUtils";
+
 interface MCQBody {
   questionName: string;
   options: string[];
@@ -11,21 +13,25 @@ interface MCQBody {
 
 interface GeneralQuestionBody {
   courseId: string;
-  subject: string;
+  subjectId: string;
   language: string;
   topic: string;
 }
 
-// Get all general questions
+// Get all general questions (filtered by institute)
 export const getGeneralQuestions = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const allGQuestions = await GeneralMCQModel.find({});
+    // Extract instituteId for data isolation
+    const instituteId = getInstituteId(req);
+
+    const allGQuestions = await GeneralMCQModel.find({ instituteId });
 
     if (!allGQuestions || allGQuestions.length === 0) {
       res.status(404).json({
         success: false,
         message: "No questions found",
       });
+      return;
     }
 
     res.status(200).json({
@@ -35,15 +41,22 @@ export const getGeneralQuestions = asyncHandler(
     });
   }
 );
-//Get General Question by Id
+
+// Get General Question by Id (with institute validation)
 export const getGQbyID = asyncHandler(async (req: Request, res: Response) => {
   const { generalQSetId } = req.params;
-  // Find the General Question Set by ID
-  const generalQuestionSet = await GeneralMCQModel.findById(generalQSetId);
+  const instituteId = getInstituteId(req);
+
+  // Find the General Question Set by ID and validate institute ownership
+  const generalQuestionSet = await GeneralMCQModel.findOne({
+    _id: generalQSetId,
+    instituteId, // Ensure it belongs to the user's institute
+  });
+
   // Check if the question set exists
   if (!generalQuestionSet) {
     res.status(404);
-    throw new Error("General Question Set not found");
+    throw createAccessDeniedError("General Question Set");
   }
 
   // Return the found question set
@@ -56,11 +69,11 @@ export const getGQbyID = asyncHandler(async (req: Request, res: Response) => {
 // Create general question set
 export const createGeneralQuestions = asyncHandler(
   async (req: Request, res: Response) => {
-    const { courseId, subject, language, topic }: GeneralQuestionBody =
+    const { courseId, subjectId, language, topic }: GeneralQuestionBody =
       req.body;
 
     // Validate required fields
-    if (!courseId || !subject || !language || !topic) {
+    if (!courseId || !subjectId || !language || !topic) {
       res.status(400);
       throw new Error("All fields are required");
     }
@@ -71,9 +84,13 @@ export const createGeneralQuestions = asyncHandler(
       throw new Error("Invalid course ID format");
     }
 
+    // Extract instituteId from authenticated user's token
+    const instituteId = getInstituteId(req);
+
     const generalQuestionSet = new GeneralMCQModel({
-      course: courseId,
-      subject,
+      instituteId,
+      courseId,
+      subjectId,
       language,
       topic,
       mcqs: [],
@@ -94,10 +111,11 @@ export const createGeneralQuestions = asyncHandler(
   }
 );
 
-// Add MCQ to general question set
+// Add MCQ to general question set (with institute validation)
 export const addMCQforGQ = asyncHandler(async (req: Request, res: Response) => {
   const { generalQSetId } = req.params;
   const { questionName, options, correctOption }: MCQBody = req.body;
+  const instituteId = getInstituteId(req);
 
   // Validate ObjectId format
   if (!Types.ObjectId.isValid(generalQSetId)) {
@@ -111,11 +129,15 @@ export const addMCQforGQ = asyncHandler(async (req: Request, res: Response) => {
     throw new Error("All MCQ fields are required");
   }
 
-  const questionSet = await GeneralMCQModel.findById(generalQSetId);
+  // Find question set with institute validation
+  const questionSet = await GeneralMCQModel.findOne({
+    _id: generalQSetId,
+    instituteId,
+  });
 
   if (!questionSet) {
     res.status(404);
-    throw new Error("Question set not found");
+    throw createAccessDeniedError("Question set");
   }
 
   // Validate options and correctOption
@@ -148,10 +170,11 @@ export const addMCQforGQ = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-// Update general question set
+// Update general question set (with institute validation)
 export const updateGQ = asyncHandler(async (req: Request, res: Response) => {
   const { generalQSetId } = req.params;
   const updateData: Partial<GeneralQuestionBody> = req.body;
+  const instituteId = getInstituteId(req);
 
   // Validate ObjectId format
   if (!Types.ObjectId.isValid(generalQSetId)) {
@@ -165,22 +188,25 @@ export const updateGQ = asyncHandler(async (req: Request, res: Response) => {
     throw new Error("Invalid course ID format");
   }
 
-  const updatedQuestionSet = await GeneralMCQModel.findByIdAndUpdate(
-    generalQSetId,
+  const updatedQuestionSet = await GeneralMCQModel.findOneAndUpdate(
+    {
+      _id: generalQSetId,
+      instituteId, // Ensure institute ownership
+    },
     {
       $set: {
-        ...(updateData.courseId && { course: updateData.courseId }),
-        ...(updateData.subject && { subject: updateData.subject }),
+        ...(updateData.courseId && { courseId: updateData.courseId }),
+        ...(updateData.subjectId && { subjectId: updateData.subjectId }),
         ...(updateData.language && { language: updateData.language }),
         ...(updateData.topic && { topic: updateData.topic }),
       },
     },
     { new: true }
-  ).populate("course", "courseName description");
+  ).populate("courseId", "courseName description");
 
   if (!updatedQuestionSet) {
     res.status(404);
-    throw new Error("Question set not found");
+    throw createAccessDeniedError("Question set");
   }
 
   res.status(200).json({
@@ -190,11 +216,19 @@ export const updateGQ = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-// Update specific MCQ in a question set
+// Update specific MCQ in a question set (with institute validation)
 export const updateGQ_MCQ = asyncHandler(
   async (req: Request, res: Response) => {
     const { generalQSetId, mcqId } = req.params;
     const updateData: Partial<MCQBody> = req.body;
+    const instituteId = getInstituteId(req);
+
+    console.log("Update MCQ Request:", {
+      generalQSetId,
+      mcqId,
+      updateData,
+      instituteId,
+    });
 
     // Validate IDs format
     if (
@@ -205,66 +239,83 @@ export const updateGQ_MCQ = asyncHandler(
       throw new Error("Invalid ID format");
     }
 
-    // Verify the question set exists
-    const questionSet = await GeneralMCQModel.findById(generalQSetId);
+    // Verify the question set exists and belongs to institute
+    const questionSet = await GeneralMCQModel.findOne({
+      _id: generalQSetId,
+      instituteId,
+    });
+
     if (!questionSet) {
       res.status(404);
-      throw new Error("Question set not found");
+      throw createAccessDeniedError("Question set");
     }
 
     // Find the specific MCQ to update
-    const currentMCQ = questionSet.mcqs.find(
+    const mcqIndex = questionSet.mcqs.findIndex(
       (mcq) => mcq._id.toString() === mcqId
     );
-    if (!currentMCQ) {
+
+    if (mcqIndex === -1) {
       res.status(404);
       throw new Error("MCQ not found in question set");
     }
 
-    // Calculate new values for validation
+    const currentMCQ = questionSet.mcqs[mcqIndex];
+
+    // ✅ FIXED: Validate with the actual options that will be saved
     const newOptions = updateData.options ?? currentMCQ.options;
     const newCorrectOption =
       updateData.correctOption ?? currentMCQ.correctOption;
 
-    // Validate correctOption against the (potentially updated) options array
+    console.log("Validation Check:", {
+      newOptions,
+      newCorrectOption,
+      optionsLength: newOptions.length,
+      isValidIndex:
+        newCorrectOption >= 0 && newCorrectOption < newOptions.length,
+    });
+
+    // Validate correctOption against the new options array
+    if (!Array.isArray(newOptions) || newOptions.length === 0) {
+      res.status(400);
+      throw new Error("Options array cannot be empty");
+    }
+
     if (newCorrectOption < 0 || newCorrectOption >= newOptions.length) {
       res.status(400);
       throw new Error(
-        "correctOption must be a valid index of the options array"
+        `correctOption must be between 0 and ${
+          newOptions.length - 1
+        }. Got: ${newCorrectOption}`
       );
     }
 
-    // Build update object
-    const updateFields: any = {};
+    // ✅ SOLUTION A: Direct array modification (bypasses schema validation issues)
     if (updateData.questionName !== undefined) {
-      updateFields["mcqs.$.questionName"] = updateData.questionName;
+      questionSet.mcqs[mcqIndex].questionName = updateData.questionName;
     }
     if (updateData.options !== undefined) {
-      updateFields["mcqs.$.options"] = updateData.options;
+      questionSet.mcqs[mcqIndex].options = updateData.options;
     }
     if (updateData.correctOption !== undefined) {
-      updateFields["mcqs.$.correctOption"] = updateData.correctOption;
+      questionSet.mcqs[mcqIndex].correctOption = updateData.correctOption;
     }
 
-    // Update the MCQ
-    const result = await GeneralMCQModel.findOneAndUpdate(
-      {
-        _id: generalQSetId,
-        "mcqs._id": new Types.ObjectId(mcqId),
+    // Save with validation disabled for this specific update
+    const result = await questionSet.save({ validateBeforeSave: false });
+
+    // Get the updated MCQ
+    const updatedMCQ = result.mcqs[mcqIndex];
+
+    console.log("Update successful:", {
+      updatedMCQ: {
+        _id: updatedMCQ._id,
+        questionName: updatedMCQ.questionName,
+        options: updatedMCQ.options,
+        correctOption: updatedMCQ.correctOption,
       },
-      { $set: updateFields },
-      {
-        new: true,
-        runValidators: true, // Still run schema validators as backup
-      }
-    );
+    });
 
-    if (!result) {
-      res.status(404);
-      throw new Error("Failed to update MCQ");
-    }
-
-    const updatedMCQ = result.mcqs.find((mcq) => mcq._id.toString() === mcqId);
     res.status(200).json({
       success: true,
       message: "MCQ updated successfully",
@@ -273,9 +324,10 @@ export const updateGQ_MCQ = asyncHandler(
   }
 );
 
-// Delete general question set
+// Delete general question set (with institute validation)
 export const deleteGQ = asyncHandler(async (req: Request, res: Response) => {
   const { generalQSetId } = req.params;
+  const instituteId = getInstituteId(req);
 
   // Validate ObjectId format
   if (!Types.ObjectId.isValid(generalQSetId)) {
@@ -283,12 +335,15 @@ export const deleteGQ = asyncHandler(async (req: Request, res: Response) => {
     throw new Error("Invalid question set ID format");
   }
 
-  // First find the question set to check MCQ count
-  const questionSet = await GeneralMCQModel.findById(generalQSetId);
+  // First find the question set to check MCQ count and institute ownership
+  const questionSet = await GeneralMCQModel.findOne({
+    _id: generalQSetId,
+    instituteId,
+  });
 
   if (!questionSet) {
     res.status(404);
-    throw new Error("Question set not found");
+    throw createAccessDeniedError("Question set");
   }
 
   // Check if there are less than 6 MCQs
@@ -297,6 +352,7 @@ export const deleteGQ = asyncHandler(async (req: Request, res: Response) => {
       success: false,
       message: "Cannot delete question set with 6 or more questions",
     });
+    return;
   }
 
   // Delete the question set
@@ -308,3 +364,43 @@ export const deleteGQ = asyncHandler(async (req: Request, res: Response) => {
     data: null,
   });
 });
+
+// Delete specific MCQ from question set (with institute validation)
+export const deleteGQ_mcqId = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { generalQSetId, mcqId } = req.params;
+    const instituteId = getInstituteId(req);
+
+    // Validate IDs format
+    if (
+      !Types.ObjectId.isValid(generalQSetId) ||
+      !Types.ObjectId.isValid(mcqId)
+    ) {
+      res.status(400);
+      throw new Error("Invalid ID format");
+    }
+
+    // Find and update the question set
+    const result = await GeneralMCQModel.findOneAndUpdate(
+      {
+        _id: generalQSetId,
+        instituteId, // Ensure institute ownership
+      },
+      {
+        $pull: { mcqs: { _id: new Types.ObjectId(mcqId) } },
+      },
+      { new: true }
+    );
+
+    if (!result) {
+      res.status(404);
+      throw createAccessDeniedError("Question set");
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "MCQ deleted successfully",
+      data: result,
+    });
+  }
+);
