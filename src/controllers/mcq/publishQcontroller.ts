@@ -1,46 +1,51 @@
+// publishQcontroller.ts
 import asyncHandler from "express-async-handler";
 import { Request, Response } from "express";
 import { IMCQ } from "../../types/mcq.types";
 import { PublishedMock } from "../../models/mcq/feedMCQ";
-import { AuthenticatedRequest } from "../../types/request.types";
 import { Types } from "mongoose";
+import {
+  getInstituteId,
+  createAccessDeniedError,
+  isSuperAdmin,
+} from "../../utils/authUtils";
 
 interface IPublishMockBody {
   courseId: string;
-  subject: string;
+  subjectId: string;
   language: string;
   title: string;
-  publishedBy: string;
-  mcqs: IMCQ[];
+  // publishedBy: string;
+  mcqs?: IMCQ[];
 }
-// create the Feed/Publish Question
-export const publishMockTest = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const {
-      courseId,
-      subject,
-      language,
-      title,
-      publishedBy,
-    }: IPublishMockBody = req.body;
 
-    if (!courseId || !subject || !language || !title) {
+// Create/Publish Mock Test (with institute validation)
+export const publishMockTest = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { courseId, subjectId, language, title }: IPublishMockBody = req.body;
+
+    // Validate required fields
+    if (!courseId || !subjectId || !language || !title) {
       res.status(400);
       throw new Error("Please provide all required fields");
     }
+
     // Validate courseId format
     if (!Types.ObjectId.isValid(courseId)) {
       res.status(400);
       throw new Error("Invalid course ID format");
     }
 
+    // Extract instituteId from authenticated user's token
+    const instituteId = getInstituteId(req);
+
     const publishedMock = await PublishedMock.create({
+      instituteId, // Add institute ID for data isolation
       courseId,
-      subject,
+      subjectId,
       language,
       title,
       mcqs: [],
-      publishedBy,
     });
 
     if (!publishedMock) {
@@ -56,27 +61,34 @@ export const publishMockTest = asyncHandler(
     });
   }
 );
-// FOr students
-// export const getFeedMockTests = asyncHandler(
-//   async (req: Request, res: Response) => {}
-// );
 
-// Get all the Feed Question
+// Get all published questions (filtered by institute or global for SuperAdmin)
 export const getPublishQuestions = asyncHandler(
   async (req: Request, res: Response) => {
-    const { courseId, subject } = req.query;
+    const { courseId, subjectId } = req.query;
 
-    const query: any = {};
+    let query: any = {};
+
+    // SuperAdmin can see all published questions, others only their institute's
+    if (!isSuperAdmin(req)) {
+      const instituteId = getInstituteId(req);
+      query.instituteId = instituteId;
+    }
+
+    // Add additional filters if provided
     if (courseId) query.courseId = courseId;
-    if (subject) query.subject = subject;
+    if (subjectId) query.subjectId = subjectId;
 
     const feedQuestions = await PublishedMock.find(query).sort({
       publishedAt: -1,
     });
 
     if (!feedQuestions || feedQuestions.length === 0) {
-      res.status(404);
-      throw new Error("No feed questions found");
+      res.status(404).json({
+        success: false,
+        message: "No published questions found",
+      });
+      return;
     }
 
     res.status(200).json({
@@ -87,52 +99,76 @@ export const getPublishQuestions = asyncHandler(
   }
 );
 
+// Get published question by ID (with institute validation)
 export const getPQbyID = asyncHandler(async (req: Request, res: Response) => {
   const { publishQSetId } = req.params;
-  const publishQuestionSet = await PublishedMock.findById(publishQSetId);
+
+  // Validate ObjectId format
+  if (!Types.ObjectId.isValid(publishQSetId)) {
+    res.status(400);
+    throw new Error("Invalid question set ID format");
+  }
+
+  let query: any = { _id: publishQSetId };
+
+  // SuperAdmin can access any published question, others only their institute's
+  if (!isSuperAdmin(req)) {
+    const instituteId = getInstituteId(req);
+    query.instituteId = instituteId;
+  }
+
+  const publishQuestionSet = await PublishedMock.findOne(query);
+
   if (!publishQuestionSet) {
     res.status(404);
-    throw new Error("Publish Question Set not found");
+    throw createAccessDeniedError("Published Question Set");
   }
-  //Return the found question set
+
   res.status(200).json({
     success: true,
     data: publishQuestionSet,
   });
 });
 
-// create the Feed Question and insert MCQ form
-export const addMCQforPQ = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const { publishQSetId } = req.params;
-    const { questionName, options, correctOption }: IMCQ = req.body;
-    const instituteId = req.institute?._id;
+// Add MCQ to published question set (with institute validation and weekly limit)
+export const addMCQforPQ = asyncHandler(async (req: Request, res: Response) => {
+  const { publishQSetId } = req.params;
+  const { questionName, options, correctOption }: IMCQ = req.body;
 
-    // Validate ObjectId format
-    if (!Types.ObjectId.isValid(publishQSetId)) {
-      res.status(400);
-      throw new Error("Invalid question set ID format");
-    }
+  // Validate ObjectId format
+  if (!Types.ObjectId.isValid(publishQSetId)) {
+    res.status(400);
+    throw new Error("Invalid question set ID format");
+  }
 
-    if (!instituteId) {
-      res.status(401);
-      throw new Error("Not authenticated");
-    }
+  // Validate required fields
+  if (!questionName || !options || correctOption === undefined) {
+    res.status(400);
+    throw new Error("Please provide all MCQ fields");
+  }
 
-    if (!questionName || !options || correctOption === undefined) {
-      res.status(400);
-      throw new Error("Please provide all MCQ fields");
-    }
+  // Validate options and correctOption
+  if (
+    !Array.isArray(options) ||
+    options.length === 0 ||
+    correctOption < 0 ||
+    correctOption >= options.length
+  ) {
+    res.status(400);
+    throw new Error("Invalid options or correct option");
+  }
 
-    // Calculate the date 7 days ago
+  const instituteId = getInstituteId(req);
+
+  // Check weekly question limit (only for non-SuperAdmin users)
+  if (!isSuperAdmin(req)) {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    // Count questions added in the last week
     const recentQuestionsCount = await PublishedMock.aggregate([
       {
         $match: {
-          instituteId: instituteId.toString(),
+          instituteId: instituteId,
           publishedAt: { $gte: oneWeekAgo },
         },
       },
@@ -157,87 +193,167 @@ export const addMCQforPQ = asyncHandler(
         "Weekly question limit (10) reached. Please try again after some time."
       );
     }
-
-    const feedQuestion = await PublishedMock.findById(publishQSetId);
-
-    if (!feedQuestion) {
-      res.status(404);
-      throw new Error("Feed question not found");
-    }
-
-    // Verify institute ownership
-    // if (feedQuestion.instituteId.toString() !== instituteId.toString()) {
-    //   res.status(403);
-    //   throw new Error("Not authorized to modify this feed question");
-    // }
-
-    feedQuestion.mcqs.push({ questionName, options, correctOption });
-    await feedQuestion.save();
-
-    res.status(200).json({
-      success: true,
-      message: "MCQ added successfully",
-      publishQSetId: publishQSetId,
-      questionsRemainingThisWeek: 10 - (weeklyQuestionCount + 1),
-      data: feedQuestion,
-    });
   }
-);
 
-// update the Feed Question
-export const updatePQ = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const { publishQSetId } = req.params;
-    const updates = req.body;
+  // Find question set with institute validation
+  const feedQuestion = await PublishedMock.findOne({
+    _id: publishQSetId,
+    instituteId,
+  });
 
-    const feedQuestion = await PublishedMock.findById(publishQSetId);
-
-    if (!feedQuestion) {
-      res.status(404);
-      throw new Error("Feed question not found");
-    }
-
-    // Verify institute ownership
-    // if (feedQuestion.instituteId.toString() !== req.institute?._id.toString()) {
-    //   res.status(403);
-    //   throw new Error("Not authorized to modify this feed question");
-    // }
-
-    const updatedFeedQuestion = await PublishedMock.findByIdAndUpdate(
-      publishQSetId,
-      updates,
-      { new: true, runValidators: true }
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Feed question updated successfully",
-      data: updatedFeedQuestion,
-    });
+  if (!feedQuestion) {
+    res.status(404);
+    throw createAccessDeniedError("Published question set");
   }
-);
 
-// update  MCQ form
+  // Add the MCQ
+  feedQuestion.mcqs.push({
+    _id: new Types.ObjectId(),
+    questionName,
+    options,
+    correctOption,
+  });
+  await feedQuestion.save();
+
+  // Calculate remaining questions for this week (only for non-SuperAdmin)
+  let questionsRemainingThisWeek = null;
+  if (!isSuperAdmin(req)) {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    const currentCount = await PublishedMock.aggregate([
+      {
+        $match: {
+          instituteId: instituteId,
+          publishedAt: { $gte: oneWeekAgo },
+        },
+      },
+      {
+        $project: {
+          mcqCount: { $size: "$mcqs" },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalMCQs: { $sum: "$mcqCount" },
+        },
+      },
+    ]);
+
+    const currentWeeklyCount = currentCount[0]?.totalMCQs || 0;
+    questionsRemainingThisWeek = Math.max(0, 10 - currentWeeklyCount);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "MCQ added successfully",
+    publishQSetId: publishQSetId,
+    ...(questionsRemainingThisWeek !== null && {
+      questionsRemainingThisWeek,
+    }),
+    data: feedQuestion,
+  });
+});
+
+// Update published question metadata (with institute validation)
+export const updatePQ = asyncHandler(async (req: Request, res: Response) => {
+  const { publishQSetId } = req.params;
+  const updates: Partial<IPublishMockBody> = req.body;
+
+  // Validate ObjectId format
+  if (!Types.ObjectId.isValid(publishQSetId)) {
+    res.status(400);
+    throw new Error("Invalid question set ID format");
+  }
+
+  // Validate courseId format if provided
+  if (updates.courseId && !Types.ObjectId.isValid(updates.courseId)) {
+    res.status(400);
+    throw new Error("Invalid course ID format");
+  }
+
+  const instituteId = getInstituteId(req);
+
+  // Find and update with institute validation
+  const updatedFeedQuestion = await PublishedMock.findOneAndUpdate(
+    {
+      _id: publishQSetId,
+      instituteId, // Ensure institute ownership
+    },
+    {
+      $set: {
+        ...(updates.courseId && { courseId: updates.courseId }),
+        ...(updates.subjectId && { subjectId: updates.subjectId }),
+        ...(updates.language && { language: updates.language }),
+        ...(updates.title && { title: updates.title }),
+      },
+    },
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedFeedQuestion) {
+    res.status(404);
+    throw createAccessDeniedError("Published question set");
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Published question updated successfully",
+    data: updatedFeedQuestion,
+  });
+});
+
+// Update specific MCQ in published question set (with institute validation)
 export const updatePQ_MCQ = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const { publishQSetId } = req.params;
-    const { mcqId } = req.query;
+  async (req: Request, res: Response) => {
+    const { publishQSetId, mcqId } = req.params;
     const updates: Partial<IMCQ> = req.body;
 
-    const feedQuestion = await PublishedMock.findById(publishQSetId);
+    // Validate IDs format
+    if (
+      !Types.ObjectId.isValid(publishQSetId) ||
+      !Types.ObjectId.isValid(mcqId)
+    ) {
+      res.status(400);
+      throw new Error("Invalid ID format");
+    }
+
+    const instituteId = getInstituteId(req);
+
+    // Find the question set with institute validation
+    const feedQuestion = await PublishedMock.findOne({
+      _id: publishQSetId,
+      instituteId,
+    });
 
     if (!feedQuestion) {
       res.status(404);
-      throw new Error("Feed question not found");
+      throw createAccessDeniedError("Published question set");
     }
 
+    // Find the specific MCQ
     const mcqIndex = feedQuestion.mcqs.findIndex(
-      (mcq) => (mcq._id as Types.ObjectId).toString() === mcqId
+      (mcq) => mcq._id?.toString() === mcqId
     );
 
-    if (!mcqIndex) {
+    if (mcqIndex === -1) {
       res.status(404);
-      throw new Error("MCQ not found");
+      throw new Error("MCQ not found in question set");
+    }
+
+    // Validate options and correctOption if provided
+    if (updates.options || updates.correctOption !== undefined) {
+      const newOptions = updates.options ?? feedQuestion.mcqs[mcqIndex].options;
+      const newCorrectOption =
+        updates.correctOption ?? feedQuestion.mcqs[mcqIndex].correctOption;
+
+      if (newCorrectOption < 0 || newCorrectOption >= newOptions.length) {
+        res.status(400);
+        throw new Error(
+          "correctOption must be a valid index of the options array"
+        );
+      }
     }
 
     // Update MCQ fields
@@ -256,15 +372,27 @@ export const updatePQ_MCQ = asyncHandler(
   }
 );
 
-// delete the Feed Question
+// Delete published question set (with institute validation)
 export const deletePQ = asyncHandler(async (req: Request, res: Response) => {
   const { publishQSetId } = req.params;
 
-  const feedQuestion = await PublishedMock.findById(publishQSetId);
+  // Validate ObjectId format
+  if (!Types.ObjectId.isValid(publishQSetId)) {
+    res.status(400);
+    throw new Error("Invalid question set ID format");
+  }
+
+  const instituteId = getInstituteId(req);
+
+  // Find the question set with institute validation
+  const feedQuestion = await PublishedMock.findOne({
+    _id: publishQSetId,
+    instituteId,
+  });
 
   if (!feedQuestion) {
     res.status(404);
-    throw new Error("Feed question not found");
+    throw createAccessDeniedError("Published question set");
   }
 
   // Check if there are 6 or more MCQs
@@ -281,7 +409,49 @@ export const deletePQ = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(200).json({
     success: true,
-    message: "Feed question deleted successfully",
+    message: "Published question deleted successfully",
     data: null,
   });
 });
+
+// Delete specific MCQ from published question set (with institute validation)
+export const deletePQ_MCQ = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { publishQSetId, mcqId } = req.params;
+
+    // Validate IDs format
+    if (
+      !Types.ObjectId.isValid(publishQSetId) ||
+      !Types.ObjectId.isValid(mcqId)
+    ) {
+      res.status(400);
+      throw new Error("Invalid ID format");
+    }
+
+    const instituteId = getInstituteId(req);
+
+    // Find and update the question set
+    const result = await PublishedMock.findOneAndUpdate(
+      {
+        _id: publishQSetId,
+        instituteId, // Ensure institute ownership
+      },
+      {
+        $pull: { mcqs: { _id: new Types.ObjectId(mcqId) } },
+      },
+      { new: true }
+    );
+
+    if (!result) {
+      res.status(404);
+      throw createAccessDeniedError("Published question set");
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "MCQ deleted successfully",
+      data: result,
+    });
+  }
+);
+export const deletePQ_mcqId = () => {};
