@@ -1,379 +1,356 @@
-import {
-  CreateNoteRequest,
-  DeleteNoteRequest,
-  NoteBodyRequest,
-  UpdateNoteRequest,
-} from "@/types/note.types";
-import { CourseModel } from "../../models/course/courseModel";
-import { LongNoteModel } from "../../models/mcq/longNoteModel";
-import { AuthenticatedRequest } from "../../types/request.types";
-import { Response } from "express";
+// notesController.ts
+import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
+import { LongNoteModel } from "../../models/mcq/longNoteModel";
 import { Types } from "mongoose";
+import { getInstituteId, createAccessDeniedError } from "../../utils/authUtils";
 
-// Get all the Notes Question
-const getNotes = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const courseId = req.query.courseId;
+interface NoteBody {
+  title: string;
+  content: string;
+}
 
-    // Build query based on provided filters
-    const query: any = {};
+interface LongNotesBody {
+  courseId: string;
+  subjectId: string;
+  language: string;
+  topic: string;
+}
 
-    if (courseId) {
-      // Verify course belongs to institute
-      const course = await CourseModel.findOne({
-        _id: courseId,
-        institute: req.institute?._id,
+interface NoteUpdateBody {
+  // Metadata fields
+  courseId?: string;
+  subjectId?: string;
+  language?: string;
+  topic?: string;
+
+  // Note body fields (optional)
+  noteBodyId?: string;
+  title?: string;
+  content?: string;
+}
+
+// Get all notes (filtered by institute)
+export const getNotes = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const instituteId = getInstituteId(req);
+
+    const allNotes = await LongNoteModel.find({ instituteId })
+      .populate("courseId", "name")
+      .populate("subjectId", "name");
+
+    if (!allNotes || allNotes.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "No notes found",
       });
-
-      if (!course) {
-        res.status(404);
-        throw new Error(
-          "Course not found or does not belong to your institute"
-        );
-      }
-
-      query.course = courseId;
-    } else {
-      // Get all courses for this institute
-      const courses = await CourseModel.find({
-        institute: req.institute?._id,
-      }).select("_id");
-
-      query.course = { $in: courses.map((c) => c._id) };
+      return;
     }
 
-    // Get notes with pagination
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit;
-
-    // For large content, we don't send the full content in the listing
-    const notes = await LongNoteModel.find(query)
-      .select(
-        "course subject language topic contentSummary wordCount createdAt updatedAt"
-      )
-      .populate("course", "name")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await LongNoteModel.countDocuments(query);
-
-    res.json({
+    res.status(200).json({
       success: true,
-      count: notes.length,
-      total,
-      page,
-      pages: Math.ceil(total / limit),
-      data: notes,
+      message: "Notes fetched successfully",
+      data: allNotes,
     });
   }
 );
 
-// create the Notes Question
-const createNotes = asyncHandler(
-  async (req: CreateNoteRequest, res: Response) => {
-    const { courseId, subject, language, topic } = req.body;
+// Get a single note by ID (with institute validation)
+export const getNoteById = asyncHandler(async (req: Request, res: Response) => {
+  const { noteSetId } = req.params;
+  const instituteId = getInstituteId(req);
 
-    // Validate required fields
-    if (!courseId || !subject || !language || !topic) {
-      res.status(400);
-      throw new Error(
-        "Please provide all required fields: courseId, subject, language, topic"
-      );
-    }
+  // Find the note and validate institute ownership
+  const note = await LongNoteModel.findOne({
+    _id: noteSetId,
+    instituteId,
+  })
+    .populate("courseId", "name")
+    .populate("subjectId", "name");
 
-    // Verify course exists and belongs to institute
-    const course = await CourseModel.findOne({
-      _id: courseId,
-      institute: req.institute?._id,
-    });
-
-    if (!course) {
-      res.status(404);
-      throw new Error("Course not found or does not belong to your institute");
-    }
-
-    const newNote = await LongNoteModel.create({
-      course: courseId, // Using courseId as course reference
-      subject,
-      language,
-      topic,
-      notebody: [],
-    });
-
-    // Add note reference to the course
-    await CourseModel.findByIdAndUpdate(courseId, {
-      $push: { longNotes: newNote._id },
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Note created successfully",
-      data: newNote,
-    });
+  if (!note) {
+    res.status(404);
+    throw createAccessDeniedError("Note");
   }
-);
 
-// update the Notes Question
-const updateNotes = asyncHandler(
-  async (req: UpdateNoteRequest, res: Response) => {
+  res.json({
+    success: true,
+    data: note,
+  });
+});
+
+// Create notes
+export const createNotes = asyncHandler(async (req: Request, res: Response) => {
+  const { courseId, subjectId, language, topic }: LongNotesBody = req.body;
+
+  // Validate required fields
+  if (!courseId || !subjectId || !language || !topic) {
+    res.status(400);
+    throw new Error(
+      "All required fields: courseId, subjectId, language, topic"
+    );
+  }
+
+  // Validate ObjectId formats
+  if (!Types.ObjectId.isValid(courseId)) {
+    res.status(400);
+    throw new Error("Invalid course ID format");
+  }
+
+  if (!Types.ObjectId.isValid(subjectId)) {
+    res.status(400);
+    throw new Error("Invalid subject ID format");
+  }
+
+  // Extract instituteId from authenticated user's token
+  const instituteId = getInstituteId(req);
+
+  const newNote = await LongNoteModel.create({
+    instituteId,
+    courseId,
+    subjectId,
+    language,
+    topic,
+    notebody: [],
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Note created successfully",
+    data: newNote,
+  });
+});
+
+// Update the Notes Question (with institute validation)
+export const updateNotes = asyncHandler(async (req: Request, res: Response) => {
+  const { noteSetId } = req.params;
+  const { subjectId, language, topic }: Partial<LongNotesBody> = req.body;
+  const instituteId = getInstituteId(req);
+
+  // Validate ObjectId format
+  if (!Types.ObjectId.isValid(noteSetId)) {
+    res.status(400);
+    throw new Error("Invalid note set ID format");
+  }
+
+  // Verify at least one field is provided for update
+  if (!subjectId && !language && !topic) {
+    res.status(400);
+    throw new Error("Please provide at least one field to update");
+  }
+
+  // Validate subjectId format if provided
+  if (subjectId && !Types.ObjectId.isValid(subjectId)) {
+    res.status(400);
+    throw new Error("Invalid subject ID format");
+  }
+
+  const updatedNote = await LongNoteModel.findOneAndUpdate(
+    {
+      _id: noteSetId,
+      instituteId, // Ensure institute ownership
+    },
+    {
+      $set: {
+        ...(subjectId && { subjectId }),
+        ...(language && { language }),
+        ...(topic && { topic }),
+      },
+    },
+    { new: true }
+  )
+    .populate("courseId", "name")
+    .populate("subjectId", "name");
+
+  if (!updatedNote) {
+    res.status(404);
+    throw createAccessDeniedError("Note");
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Note updated successfully",
+    data: updatedNote,
+  });
+});
+
+// Delete the Notes Question (with institute validation)
+export const deleteNotes = asyncHandler(async (req: Request, res: Response) => {
+  const { noteSetId } = req.params;
+  const instituteId = getInstituteId(req);
+
+  // Validate ObjectId format
+  if (!Types.ObjectId.isValid(noteSetId)) {
+    res.status(400);
+    throw new Error("Invalid note set ID format");
+  }
+
+  // Find and delete the note with institute validation
+  const note = await LongNoteModel.findOneAndDelete({
+    _id: noteSetId,
+    instituteId,
+  });
+
+  if (!note) {
+    res.status(404);
+    throw createAccessDeniedError("Note");
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Note deleted successfully",
+    data: null,
+  });
+});
+
+// Add note body to a note set (with institute validation)
+export const addNotebody = asyncHandler(async (req: Request, res: Response) => {
+  const { noteSetId } = req.params;
+  const { title, content }: NoteBody = req.body;
+  const instituteId = getInstituteId(req);
+
+  // Validate ObjectId format
+  if (!Types.ObjectId.isValid(noteSetId)) {
+    res.status(400);
+    throw new Error("Invalid note set ID format");
+  }
+
+  // Validate required fields
+  if (!title || !content) {
+    res.status(400);
+    throw new Error("Title and content are required");
+  }
+
+  // Validate content length
+  if (content.length > 120000) {
+    res.status(400);
+    throw new Error("Content exceeds maximum length (120,000 characters)");
+  }
+
+  // Find note set with institute validation
+  const noteSet = await LongNoteModel.findOne({
+    _id: noteSetId,
+    instituteId,
+  });
+
+  if (!noteSet) {
+    res.status(404);
+    throw createAccessDeniedError("Note set");
+  }
+
+  // Create new note body
+  const noteBodyData = {
+    _id: new Types.ObjectId(),
+    title,
+    content,
+    wordCount: content.trim().split(/\s+/).length,
+  };
+
+  noteSet.notebody.push(noteBodyData as any);
+  await noteSet.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Note body added successfully",
+    noteSetId: noteSetId,
+    data: noteBodyData,
+  });
+});
+
+export const updateNoteBody = asyncHandler(
+  async (req: Request, res: Response) => {
     const { noteSetId } = req.params;
-    const { subject, language, topic } = req.body;
+    const { courseId, subjectId, language, topic } = req.body;
+    const instituteId = getInstituteId(req);
 
     // Validate ObjectId format
     if (!Types.ObjectId.isValid(noteSetId)) {
       res.status(400);
-      throw new Error("Invalid question set ID format");
+      throw new Error("Invalid note set ID format");
     }
 
-    // Verify at least one field is provided for update
-    if (!subject && !language && !topic) {
+    // Validate at least one field is provided for update
+    if (!courseId && !subjectId && !language && !topic) {
       res.status(400);
       throw new Error("Please provide at least one field to update");
     }
 
-    const note = await LongNoteModel.findById(noteSetId);
+    // Validate courseId format if provided
+    if (courseId && !Types.ObjectId.isValid(courseId)) {
+      res.status(400);
+      throw new Error("Invalid course ID format");
+    }
 
-    if (!note) {
+    // Validate subjectId format if provided
+    if (subjectId && !Types.ObjectId.isValid(subjectId)) {
+      res.status(400);
+      throw new Error("Invalid subject ID format");
+    }
+
+    // Build update object
+    const updateData: any = {};
+    if (courseId) updateData.courseId = courseId;
+    if (subjectId) updateData.subjectId = subjectId;
+    if (language) updateData.language = language;
+    if (topic) updateData.topic = topic;
+
+    const updatedNote = await LongNoteModel.findOneAndUpdate(
+      {
+        _id: noteSetId,
+        instituteId, // Ensure institute ownership
+      },
+      {
+        $set: updateData,
+      },
+      { new: true }
+    )
+      .populate("courseId", "name")
+      .populate("subjectId", "name");
+
+    if (!updatedNote) {
       res.status(404);
-      throw new Error("Note not found");
+      throw createAccessDeniedError("Note set");
     }
-
-    // Verify that the note belongs to a course owned by this institute
-    const course = await CourseModel.findOne({
-      _id: note.course,
-      institute: req.institute?._id,
-    });
-
-    if (!course) {
-      res.status(403);
-      throw new Error("You don't have permission to modify this note");
-    }
-
-    // Update note
-    if (subject) note.subject = subject;
-    if (language) note.language = language;
-    if (topic) note.topic = topic;
-
-    const updatedNote = await note.save();
 
     res.status(200).json({
       success: true,
-      message: "Note updated successfully",
+      message: "Note set updated successfully",
       data: updatedNote,
     });
   }
 );
 
-// delete the Notes Question
-const deleteNotes = asyncHandler(
-  async (req: DeleteNoteRequest, res: Response) => {
-    const { noteSetId } = req.params;
-
-    const note = await LongNoteModel.findById(noteSetId);
-
-    if (!note) {
-      res.status(404);
-      throw new Error("Note not found");
-    }
-
-    // Verify that the note belongs to a course owned by this institute
-    const course = await CourseModel.findOne({
-      _id: note.course,
-      institute: req.institute?._id,
-    });
-
-    if (!course) {
-      res.status(403);
-      throw new Error("You don't have permission to delete this note");
-    }
-
-    // Remove note reference from course
-    await CourseModel.findByIdAndUpdate(note.course, {
-      $pull: { longNotes: noteSetId },
-    });
-
-    // Delete note
-    await note.deleteOne();
-
-    res.json({
-      success: true,
-      message: "Note deleted successfully",
-    });
-  }
-);
-// || !notebody || notebody.length === 0
-
-const addNotebody = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const { noteSetId } = req.params;
-    const { title, content } = req.body;
-
-    // Validate ObjectId format
-    if (!Types.ObjectId.isValid(noteSetId)) {
-      res.status(400);
-      throw new Error("Invalid question set ID format");
-    }
-
-    // Validate required fields
-    if (!title || !content) {
-      res.status(400);
-      throw new Error("Please provide title and content");
-    }
-    // Validate content length
-    if (content.length > 120000) {
-      res.status(400);
-      throw new Error("Content exceeds maximum length (15,000 words)");
-    }
-
-    const noteSet = await LongNoteModel.findById(noteSetId);
-
-    if (!noteSet) {
-      res.status(404);
-      throw new Error("Note not found");
-    }
-
-    // Verify ownership
-    const course = await CourseModel.findOne({
-      _id: noteSet.course,
-      institute: req.institute?._id,
-    });
-
-    if (!course) {
-      res.status(403);
-      throw new Error("You don't have permission to modify this note");
-    }
-
-    // Create new noteBody with its own _id
-    const newNoteBody = {
-      _id: new Types.ObjectId(),
-      title,
-      content,
-    };
-
-    // Add to notebody array
-    noteSet.notebody.push(newNoteBody as any);
-    await noteSet.save();
-
-    res.status(201).json({
-      success: true,
-      message: "Note body added successfully",
-      noteSetId: noteSetId,
-      data: newNoteBody,
-    });
-  }
-);
-
-// const getNoteBody = asyncHandler(
-//   async (req: NoteBodyRequest, res: Response) => {
-//     const { noteSetId, noteBodySetId } = req.params;
-
-//     const note = await LongNoteModel.findById(noteSetId);
-
-//     if (!note) {
-//       res.status(404);
-//       throw new Error("Note not found");
-//     }
-
-//     // Verify ownership
-//     const course = await CourseModel.findOne({
-//       _id: note.course,
-//       institute: req.institute?._id,
-//     });
-
-//     if (!course) {
-//       res.status(403);
-//       throw new Error("You don't have permission to access this note");
-//     }
-
-//     // Find the specific noteBody
-//     const noteBody = note.notebody.find(
-//       (nb) => nb._id && nb._id.toString() === noteBodySetId
-//     );
-
-//     if (!noteBody) {
-//       res.status(404);
-//       throw new Error("Note body not found");
-//     }
-
-//     res.json({
-//       success: true,
-//       data: noteBody,
-//     });
-//   }
-// );
-
-// Get a single note by ID
-const getNoteById = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const { noteSetId } = req.params;
-
-    if (!req.institute?._id) {
-      res.status(401);
-      throw new Error("Not authorized");
-    }
-
-    const note = await LongNoteModel.findById(noteSetId).populate({
-      path: "course",
-      select: "name institute",
-    });
-
-    if (!note) {
-      res.status(404);
-      throw new Error("Note not found");
-    }
-
-    // Type assertion for populated course
-    const course = note.course as any;
-
-    // Check if the note belongs to the institute
-    if (course.institute.toString() !== req.institute._id.toString()) {
-      res.status(403);
-      throw new Error("You don't have permission to access this note");
-    }
-
-    res.json({
-      success: true,
-      data: note,
-    });
-  }
-);
-
-// Update specific noteBody
-const updateNoteBody = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+// Update specific noteBody (with institute validation)
+export const updateNote_SetId = asyncHandler(
+  async (req: Request, res: Response) => {
     const { noteSetId, noteBodySetId } = req.params;
-    const { title, content } = req.body;
+    const { title, content }: Partial<NoteBody> = req.body;
+    const instituteId = getInstituteId(req);
 
-    if (!req.institute?._id) {
-      res.status(401);
-      throw new Error("Not authorized");
+    // Validate IDs format
+    if (
+      !Types.ObjectId.isValid(noteSetId) ||
+      !Types.ObjectId.isValid(noteBodySetId)
+    ) {
+      res.status(400);
+      throw new Error("Invalid ID format");
     }
 
+    // Validate content length if provided
     if (content && content.length > 120000) {
       res.status(400);
-      throw new Error("Content exceeds maximum length (15,000 words)");
+      throw new Error("Content exceeds maximum length (120,000 characters)");
     }
 
-    const note = await LongNoteModel.findById(noteSetId).populate({
-      path: "course",
-      select: "institute",
+    // Find note with institute validation
+    const note = await LongNoteModel.findOne({
+      _id: noteSetId,
+      instituteId,
     });
 
     if (!note) {
       res.status(404);
-      throw new Error("Note not found");
-    }
-
-    // Type assertion for populated course
-    const course = note.course as any;
-
-    // Check if the note belongs to the institute
-    if (course.institute.toString() !== req.institute._id.toString()) {
-      res.status(403);
-      throw new Error("You don't have permission to modify this note");
+      throw createAccessDeniedError("Note");
     }
 
     // Find the specific noteBody
@@ -388,7 +365,12 @@ const updateNoteBody = asyncHandler(
 
     // Update the fields if provided
     if (title) note.notebody[noteBodyIndex].title = title;
-    if (content) note.notebody[noteBodyIndex].content = content;
+    if (content) {
+      note.notebody[noteBodyIndex].content = content;
+      note.notebody[noteBodyIndex].wordCount = content
+        .trim()
+        .split(/\s+/).length;
+    }
 
     const updatedNote = await note.save();
     const updatedNoteBody = updatedNote.notebody[noteBodyIndex];
@@ -401,63 +383,88 @@ const updateNoteBody = asyncHandler(
   }
 );
 
-// Delete specific noteBody
-const deleteNoteBody = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
-    const { noteSetId, noteBodySetId } = req.params;
+// Delete entire note set (with institute validation)
+export const deleteNoteBody = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { noteSetId } = req.params;
+    const instituteId = getInstituteId(req);
 
-    if (!req.institute?._id) {
-      res.status(401);
-      throw new Error("Not authorized");
-    }
-
-    const note = await LongNoteModel.findById(noteSetId).populate({
-      path: "course",
-      select: "institute",
+    console.log("Delete Note Set Request:", {
+      noteSetId,
+      instituteId,
     });
 
-    if (!note) {
+    // Validate ObjectId format
+    if (!Types.ObjectId.isValid(noteSetId)) {
+      res.status(400);
+      throw new Error("Invalid note set ID format");
+    }
+
+    // Find and delete the note set with institute validation
+    const deletedNote = await LongNoteModel.findOneAndDelete({
+      _id: noteSetId,
+      instituteId, // Ensure institute ownership
+    });
+
+    if (!deletedNote) {
       res.status(404);
-      throw new Error("Note not found");
+      throw createAccessDeniedError("Note set");
     }
 
-    // Type assertion for populated course
-    const course = note.course as any;
+    console.log("Note set deleted successfully:", {
+      deletedNoteId: deletedNote._id,
+      topic: deletedNote.topic,
+      noteBodyCount: deletedNote.notebody.length,
+    });
 
-    // Check if the note belongs to the institute
-    if (course.institute.toString() !== req.institute._id.toString()) {
-      res.status(403);
-      throw new Error("You don't have permission to modify this note");
-    }
-
-    // Find and remove the specific noteBody
-    const noteBodyIndex = note.notebody.findIndex(
-      (nb) => nb._id && nb._id.toString() === noteBodySetId
-    );
-
-    if (noteBodyIndex === -1) {
-      res.status(404);
-      throw new Error("Note body not found");
-    }
-
-    // Remove the noteBody
-    note.notebody.splice(noteBodyIndex, 1);
-    await note.save();
-
-    res.json({
+    res.status(200).json({
       success: true,
-      message: "Note body deleted successfully",
+      message: "Note set deleted successfully",
+      data: {
+        deletedNoteId: deletedNote._id,
+        topic: deletedNote.topic,
+        deletedAt: new Date(),
+      },
     });
   }
 );
 
-export {
-  getNotes,
-  getNoteById,
-  createNotes,
-  updateNotes,
-  deleteNotes,
-  addNotebody,
-  updateNoteBody,
-  deleteNoteBody,
-};
+// Delete specific noteBody (with institute validation)
+export const deleteNoteBody_SetId = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { noteSetId, noteBodySetId } = req.params;
+    const instituteId = getInstituteId(req);
+
+    // Validate IDs format
+    if (
+      !Types.ObjectId.isValid(noteSetId) ||
+      !Types.ObjectId.isValid(noteBodySetId)
+    ) {
+      res.status(400);
+      throw new Error("Invalid ID format");
+    }
+
+    // Find and update the note
+    const result = await LongNoteModel.findOneAndUpdate(
+      {
+        _id: noteSetId,
+        instituteId, // Ensure institute ownership
+      },
+      {
+        $pull: { notebody: { _id: new Types.ObjectId(noteBodySetId) } },
+      },
+      { new: true }
+    );
+
+    if (!result) {
+      res.status(404);
+      throw createAccessDeniedError("Note");
+    }
+
+    res.json({
+      success: true,
+      message: "Note body deleted successfully",
+      data: result,
+    });
+  }
+);
