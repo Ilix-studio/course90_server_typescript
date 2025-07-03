@@ -18,7 +18,7 @@ import {
   renewPasskey,
   switchAccount,
   validatePasskey,
-} from "../../controllers/auth/studentAuthcontroller";
+} from "../../controllers/student/studentAuthcontroller";
 
 const router = express.Router();
 

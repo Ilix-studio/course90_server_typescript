@@ -6,7 +6,7 @@ export const getNotes = asyncHandler(async (req: Request, res: Response) => {
   const { courseId } = req.params;
 
   const notes = await LongNoteModel.find({
-    course: courseId,
+    courseId: courseId,
   });
 
   res.json(notes);

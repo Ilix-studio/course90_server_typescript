@@ -1,7 +1,8 @@
-import { protectAccess } from "../../middlware/authMiddleware";
+import { authPrincipalOrTeacher } from "../../middlware/roleMiddleware";
 import {
   addMCQforPQ,
   deletePQ,
+  deletePQ_mcqId,
   getPQbyID,
   getPublishQuestions,
   publishMockTest,
@@ -12,30 +13,37 @@ import express from "express";
 
 const router = express.Router();
 
-// Instute can publish and student will fetch in mobile apps
-router.post("/publish", protectAccess, publishMockTest);
+// Get all the Feed Question
+router.get("/get-publishQ", authPrincipalOrTeacher, getPublishQuestions);
 
 //Get Publish/Feed Question By ID
-router.get("/get-publishQ/:publishQSetId", protectAccess, getPQbyID);
+router.get("/get-publishQ/:publishQSetId", authPrincipalOrTeacher, getPQbyID);
 
-// Get all the Feed Question
-router.get("/get-publishQ", protectAccess, getPublishQuestions);
+// Instute can publish and student will fetch in mobile apps
+router.post("/publish", authPrincipalOrTeacher, publishMockTest);
 
 // create the Feed Question and insert MCQ form
-router.post("/add-PQ/:publishQSetId", protectAccess, addMCQforPQ);
+router.post("/add-PQ/:publishQSetId", authPrincipalOrTeacher, addMCQforPQ);
 
 // update the Feed Question
-router.patch("/updatePQ/:publishQSetId", protectAccess, updatePQ);
+router.patch("/updatePQ/:publishQSetId", authPrincipalOrTeacher, updatePQ);
 
 // update  MCQ form
 router.patch(
   "/updatePQ/:publishQSetId/mcq/:mcqId",
-  protectAccess,
+  authPrincipalOrTeacher,
   updatePQ_MCQ
 );
 
 // delete the Feed Question
-router.delete("/deletePQ/:publishQSetId", protectAccess, deletePQ);
+router.delete("/deletePQ/:publishQSetId", authPrincipalOrTeacher, deletePQ);
+
+// delete the Feed Question
+router.delete(
+  "/deletePQ/:publishQSetId/mcq/:mcqId",
+  authPrincipalOrTeacher,
+  deletePQ_mcqId
+);
 
 export default router;
 

@@ -1,31 +1,37 @@
 import { IMCQ } from "../../types/mcq.types";
-import { Schema, model } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
 interface IPublishedMock {
-  instituteId: string;
-  courseId: string;
-  subject: string;
+  // NEW: Subject-based attachment
+  subjectId: Types.ObjectId;
+  courseId: Types.ObjectId;
+  instituteId: Types.ObjectId;
   title: string;
   mcqs: IMCQ[];
   publishedAt: Date;
-  publishedBy: String;
+  // publishedBy: String;
 }
 
 const publishedMockSchema = new Schema<IPublishedMock>({
-  //Store the institute Id in the model
-  instituteId: {
-    type: String,
-    ref: "Institute",
+  // NEW: Subject-based relationships
+  subjectId: {
+    type: Schema.Types.ObjectId,
+    ref: "Subject",
+    required: [true, "Subject is required"],
   },
-  //Store the course Id in the model to fetch by differenet course in mobile app
+
   courseId: {
-    type: String,
-    required: true,
+    type: Schema.Types.ObjectId,
+    ref: "Course",
+    required: [true, "Course is required"],
   },
-  subject: {
-    type: String,
-    required: true,
+
+  instituteId: {
+    type: Schema.Types.ObjectId,
+    ref: "Principal",
+    required: [true, "Institute is required"],
   },
+
   title: {
     type: String,
     required: true,
@@ -41,12 +47,14 @@ const publishedMockSchema = new Schema<IPublishedMock>({
     type: Date,
     default: Date.now,
   },
-  publishedBy: {
-    type: String,
-    required: true,
-  },
+  // publishedBy: {
+  //   type: String,
+  //   required: true,
+  // },
 });
-
+publishedMockSchema.index({ instituteId: 1 });
+publishedMockSchema.index({ courseId: 1 });
+publishedMockSchema.index({ subjectId: 1 });
 export const PublishedMock = model<IPublishedMock>(
   "PublishedMock",
   publishedMockSchema

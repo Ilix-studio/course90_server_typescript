@@ -1,5 +1,4 @@
 import express from "express";
-import { protectAccess } from "../../middlware/authMiddleware";
 
 import {
   createOrder,

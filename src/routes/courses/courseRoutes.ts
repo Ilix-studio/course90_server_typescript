@@ -1,28 +1,26 @@
-import express from "express";
+// routes/course/courseRoutes.ts
 import {
   createCourse,
-  deleteCourses,
+  deleteCourse,
+  getCourse,
   getCourses,
-  updateCourses,
-} from "../../controllers/course/createCourse.controller";
-import { protectAccess } from "../../middlware/authMiddleware";
-
-// Add protectAccess
+  updateCourse,
+} from "../../controllers/course/course.controller";
+import {
+  authPrincipal,
+  authPrincipalOrTeacher,
+} from "../../middlware/roleMiddleware";
+import express from "express";
 
 const router = express.Router();
 
-// Course creation
-router.post("/createCourses", protectAccess, createCourse);
+// app.use("/api/v2/courses", courseRoutes);
 
-// Get Courses
-router.get("/allcourses", protectAccess, getCourses);
-
-// router.get('/:courseId', protectAccess, getCourse);
-
-// update Courses
-router.put("/updatecourse/:courseId", protectAccess, updateCourses);
-
-// delete Courses
-router.delete("/deleteCourse/:courseId", protectAccess, deleteCourses);
+// Course routes
+router.post("/create", authPrincipal, createCourse);
+router.get("/", authPrincipalOrTeacher, getCourses);
+router.get("/:id", authPrincipalOrTeacher, getCourse);
+router.put("/:id", authPrincipal, updateCourse);
+router.delete("/:id", authPrincipal, deleteCourse);
 
 export default router;

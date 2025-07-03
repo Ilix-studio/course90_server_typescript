@@ -1,34 +1,33 @@
+import express from "express";
 import {
   generatePasskeys,
-  getInstitutePasskeys,
+  activatePasskey,
+  reactivatePasskey,
+  getPackageInfo,
+  calculatePrice,
+  listPasskeys as getInstitutePasskeys,
   getPasskeyDetails,
   revokePasskey,
+  getPasskeyAnalytics,
 } from "../../controllers/passkey/passkeyController";
-import { protectAccess } from "../../middlware/authMiddleware";
-
-import express from "express";
+import {
+  authPrincipal,
+  authPrincipalOrTeacher,
+} from "../../middlware/roleMiddleware";
 
 const router = express.Router();
 
-// Institute routes - generate passkeys (requires institute authentication)
-router.post("/generate-passkeys", protectAccess, generatePasskeys);
+// Principal only routes
+router.post("/generate", authPrincipal, generatePasskeys);
+router.post("/activate", authPrincipal, activatePasskey);
+router.post("/reactivate", authPrincipal, reactivatePasskey);
+router.post("/revoke", authPrincipal, revokePasskey);
+router.post("/calculate-price", authPrincipal, calculatePrice);
 
-// Institute routes - get passkeys (requires institute authentication)
-router.get("/get-passkeys", protectAccess, getInstitutePasskeys);
-
-//Institute routes - get passkey Details (requires institute authentication)
-router.get("/details/:passkeyId", protectAccess, getPasskeyDetails);
-
-// Institute routes - get passkey Details (requires institute authentication)
-router.post("/revoke", protectAccess, revokePasskey);
-
-// Student routes - activate a passkey
-// router.post("/activate-passkeys", activatePasskey);
-
-// Mark an expired passkey for revival
-// router.post("/mark-for-revival", markPasskeyForRevival);
-
-// Reactivate a passkey that was marked for revival
-// router.post("/reactivate", reactivatePasskey);
+// Shared routes (Principal or Teacher)
+router.get("/", authPrincipalOrTeacher, getInstitutePasskeys);
+router.get("/packages", authPrincipal, getPackageInfo);
+router.get("/analytics", authPrincipalOrTeacher, getPasskeyAnalytics);
+router.get("/:passkeyId", authPrincipalOrTeacher, getPasskeyDetails);
 
 export default router;

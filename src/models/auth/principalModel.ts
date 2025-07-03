@@ -82,6 +82,6 @@ principalSchema.methods.comparePassword = async function (
 };
 
 export const Principal = model<IPrincipalDocument>(
-  "InstituteAuth",
+  "Principal",
   principalSchema
 );

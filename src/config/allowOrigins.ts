@@ -21,5 +21,6 @@ const allowOrigins = [
   "https://course90-wafilix-916943050871.asia-northeast1.run.app/signin",
   "https://course90.in",
   "https://course90.in/signin",
+  "http://localhost:19006", // React Native
 ];
 export default allowOrigins;
