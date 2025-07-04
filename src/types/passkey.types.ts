@@ -69,7 +69,6 @@ export interface GeneratePasskeysRequest {
 export interface ActivatePasskeyRequest {
   passkeyId: string;
   courseId: string;
-  studentId?: string;
   deviceId: string;
   paymentId?: string;
 }

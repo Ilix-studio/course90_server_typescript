@@ -166,11 +166,11 @@ const PasskeySchema = new Schema(
     },
 
     // Student assignment
-    studentId: {
-      type: Schema.Types.ObjectId,
-      ref: "Student",
-      sparse: true,
-    },
+    // studentId: {
+    //   type: Schema.Types.ObjectId,
+    //   ref: "Student",
+    //   sparse: true,
+    // },
     deviceId: {
       type: String,
       trim: true,

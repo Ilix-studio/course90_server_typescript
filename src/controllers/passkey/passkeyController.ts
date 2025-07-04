@@ -161,8 +161,7 @@ export const generatePasskeys = asyncHandler(
 export const activatePasskey = asyncHandler(
   async (req: Request, res: Response) => {
     const principal = req.user as any;
-    const { passkeyId, courseId, studentId, deviceId }: ActivatePasskeyRequest =
-      req.body;
+    const { passkeyId, courseId, deviceId }: ActivatePasskeyRequest = req.body;
 
     // Find passkey
     const passkey = await PasskeyModel.findOne({
@@ -212,7 +211,7 @@ export const activatePasskey = asyncHandler(
         status: passkey.status,
         activatedAt: passkey.activatedAt,
         expiresAt: passkey.expiresAt,
-        studentId: passkey.studentId,
+        // studentId: passkey.studentId,
         deviceId: passkey.deviceId,
       },
     });
