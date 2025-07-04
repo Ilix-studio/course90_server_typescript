@@ -72,9 +72,10 @@ app.use("/api/v2/pricing", pricingRoutes);
 app.use("/api/v2/passkeys", passkeysRoutes);
 app.use("/api/v2/payments", paymentsRoutes);
 app.use("/api/v2/students", studentsRoutes);
-app.use("/api/v2/courseAccess", courseAccessRoutes);
 
+app.use("/api/v2/courseAccess", courseAccessRoutes);
 app.use("/api/v2/profile", profileRoutes);
+// (Student and Insitute profile)
 
 // Global error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

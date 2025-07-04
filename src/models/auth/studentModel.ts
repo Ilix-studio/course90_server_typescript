@@ -1,24 +1,13 @@
-// models/auth/studentModel.ts
+// src/models/auth/studentModel.ts
+import { Schema, model } from "mongoose";
 import {
   IStudentDocument,
-  IStudentPasscode,
+  IStudentModel,
+  IStudentPasskey,
 } from "../../types/studentAuth.types";
-import { Schema, model, Model } from "mongoose";
 
-// Interface for static methods
-interface IStudentModel extends Model<IStudentDocument> {
-  findByPasskeyAndDevice(
-    passkeyId: string,
-    deviceId: string
-  ): Promise<IStudentDocument | null>;
-  findActiveStudent(
-    passkeyId: string,
-    deviceId: string
-  ): Promise<IStudentDocument | null>;
-}
-
-// Subdocument schema for passcodes (passkeys)
-const studentPasscodeSchema = new Schema<IStudentPasscode>(
+// Subdocument schema for passkeys
+const studentPasskeySchema = new Schema<IStudentPasskey>(
   {
     // The unique passkey identifier
     passkeyId: {
@@ -32,7 +21,7 @@ const studentPasscodeSchema = new Schema<IStudentPasscode>(
       ref: "InstituteAuth",
       required: true,
     },
-    course: {
+    courseId: {
       type: Schema.Types.ObjectId,
       ref: "Course",
       required: true,
@@ -57,7 +46,7 @@ const studentPasscodeSchema = new Schema<IStudentPasscode>(
 // Main student schema
 const studentSchema = new Schema<IStudentDocument, IStudentModel>(
   {
-    // Optional personal information (can be added later)
+    // Personal information (optional, can be updated later)
     name: {
       type: String,
       trim: true,
@@ -72,6 +61,11 @@ const studentSchema = new Schema<IStudentDocument, IStudentModel>(
         "Please enter a valid email address",
       ],
     },
+    phoneNumber: {
+      type: String,
+      sparse: true,
+      trim: true,
+    },
 
     // Device identifier (required for security)
     deviceId: {
@@ -80,8 +74,9 @@ const studentSchema = new Schema<IStudentDocument, IStudentModel>(
       trim: true,
     },
 
-    // Array of passcodes (passkeys) the student has access to
-    nanoId: [studentPasscodeSchema],
+    // Array of passkeys the student has access to
+    // Renamed from nanoId to passkeys for clarity
+    passkeys: [studentPasskeySchema],
   },
   {
     timestamps: true,
@@ -90,24 +85,41 @@ const studentSchema = new Schema<IStudentDocument, IStudentModel>(
 
 // Indexes for query optimization
 studentSchema.index({ deviceId: 1 });
-studentSchema.index({ "nanoId.passkeyId": 1 });
-studentSchema.index({ "nanoId.passkeyId": 1, deviceId: 1 }, { unique: true });
+studentSchema.index({ "passkeys.passkeyId": 1 });
+
+// This index ensures each passkey can only be assigned to one device
+studentSchema.index(
+  { "passkeys.passkeyId": 1 },
+  { unique: true, sparse: true }
+);
+
+// This index ensures email uniqueness when provided
 studentSchema.index({ email: 1 }, { sparse: true });
 
+// This index ensures only one active passkey per device
+studentSchema.index(
+  { deviceId: 1, "passkeys.isActive": 1 },
+  {
+    unique: true,
+    partialFilterExpression: { "passkeys.isActive": true },
+    sparse: true,
+  }
+);
+
 // Instance methods
-studentSchema.methods.getActivePasscode = function (
+studentSchema.methods.getActivePasskey = function (
   this: IStudentDocument
-): IStudentPasscode | undefined {
-  return this.nanoId.find((p: IStudentPasscode) => p.isActive === true);
+): IStudentPasskey | undefined {
+  return this.passkeys.find((p: IStudentPasskey) => p.isActive === true);
 };
 
 studentSchema.methods.hasCourseAccess = function (
   this: IStudentDocument,
   courseId: string
 ): boolean {
-  return this.nanoId.some(
-    (p: IStudentPasscode) =>
-      p.course.toString() === courseId &&
+  return this.passkeys.some(
+    (p: IStudentPasskey) =>
+      p.courseId.toString() === courseId &&
       p.isActive === true &&
       (!p.expiresAt || p.expiresAt > new Date())
   );
@@ -120,15 +132,14 @@ studentSchema.statics.findByPasskeyAndDevice = function (
 ) {
   return this.findOne({
     deviceId,
-    "nanoId.passkeyId": passkeyId,
-    "nanoId.isActive": true,
+    "passkeys.passkeyId": passkeyId,
   }).populate([
     {
-      path: "nanoId.institute",
+      path: "passkeys.institute",
       select: "instituteName email",
     },
     {
-      path: "nanoId.course",
+      path: "passkeys.course",
       select: "name description",
     },
   ]);
@@ -140,11 +151,11 @@ studentSchema.statics.findActiveStudent = function (
 ) {
   return this.findOne({
     deviceId,
-    "nanoId.passkeyId": passkeyId,
-    "nanoId.isActive": true,
+    "passkeys.passkeyId": passkeyId,
+    "passkeys.isActive": true,
     $or: [
-      { "nanoId.expiresAt": { $exists: false } },
-      { "nanoId.expiresAt": { $gt: new Date() } },
+      { "passkeys.expiresAt": { $exists: false } },
+      { "passkeys.expiresAt": { $gt: new Date() } },
     ],
   });
 };
