@@ -5,7 +5,7 @@ import { PaymentStatus, PaymentType, CurrencyCode } from "../constants/enums";
 export interface IPayment {
   passkeyId: string;
   courseId: string;
-  studentId: string;
+  studentId?: string;
   instituteId: string;
   deviceId: string; // Device used for payment
   amount: number;
@@ -44,7 +44,7 @@ export interface CreatePaymentRequest {
 export interface CreateOrderRequest {
   passkeyId: string;
   courseId: string;
-  studentId: string;
+  studentId?: string;
   deviceId: string;
   amount: number;
   durationMonths: number;

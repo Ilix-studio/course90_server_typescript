@@ -29,3 +29,4 @@ router.post("/renew", renewPasskey);
 
 export default router;
 // authenticateStudent check valid passkey login to one device
+// Activate passkey for two or device - feature

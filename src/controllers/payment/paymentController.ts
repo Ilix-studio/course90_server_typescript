@@ -25,7 +25,7 @@ export const createOrder = asyncHandler(
     const {
       passkeyId,
       courseId,
-      studentId,
+
       deviceId,
       amount,
       currency,
@@ -38,7 +38,6 @@ export const createOrder = asyncHandler(
     const passkey = await PasskeyModel.findOne({
       passkeyId,
       courseId,
-      studentId,
     });
 
     if (!passkey) {
@@ -66,7 +65,7 @@ export const createOrder = asyncHandler(
       notes: {
         passkeyId,
         courseId,
-        studentId,
+
         paymentType,
       },
     });
@@ -80,7 +79,7 @@ export const createOrder = asyncHandler(
       passkeyId,
       durationMonths: durationMonths || passkey.durationMonths || 1,
       status: PaymentStatus.CREATED,
-      studentId,
+
       deviceId,
       platformFee: 90, // Default platform fee
       courseFee: amount - 90, // Remaining is course fee
@@ -268,10 +267,10 @@ export const getPaymentDetails = asyncHandler(
     }
 
     // Verify student owns payment
-    if (payment.studentId.toString() !== user._id.toString()) {
-      res.status(403);
-      throw new Error("Access denied");
-    }
+    // if (payment.studentId.toString() !== user._id.toString()) {
+    //   res.status(403);
+    //   throw new Error("Access denied");
+    // }
 
     res.json({
       success: true,
