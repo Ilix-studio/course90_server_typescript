@@ -8,8 +8,10 @@ interface NoteBody {
 }
 
 interface LongNotes extends Document {
-  course: Types.ObjectId;
-  subject: string;
+  // NEW: Subject-based attachment
+  subjectId: Types.ObjectId;
+  courseId: Types.ObjectId;
+  instituteId: Types.ObjectId;
   language: string;
   topic: string;
   notebody: NoteBody[];
@@ -35,11 +37,23 @@ const noteBodySchema = new Schema<NoteBody>({
   },
 });
 const longNoteSchema = new Schema<LongNotes>({
-  course: { type: Schema.Types.ObjectId, ref: "Course", required: true },
-  subject: {
-    type: String,
+  // NEW: Subject-based relationships
+  subjectId: {
+    type: Schema.Types.ObjectId,
+    ref: "Subject",
     required: [true, "Subject is required"],
-    trim: true,
+  },
+
+  courseId: {
+    type: Schema.Types.ObjectId,
+    ref: "Course",
+    required: [true, "Course is required"],
+  },
+
+  instituteId: {
+    type: Schema.Types.ObjectId,
+    ref: "Principal",
+    required: [true, "Institute is required"],
   },
   language: {
     type: String,
@@ -65,5 +79,9 @@ noteBodySchema.pre("save", function (next) {
   }
   next();
 });
+
+longNoteSchema.index({ instituteId: 1 });
+longNoteSchema.index({ courseId: 1 });
+longNoteSchema.index({ subjectId: 1 });
 
 export const LongNoteModel = model<LongNotes>("LongNote", longNoteSchema);

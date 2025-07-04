@@ -1,40 +1,72 @@
 import {
+  authPrincipalOrTeacher,
+  checkTeacherPermissions,
+} from "../../middlware/roleMiddleware";
+import {
   addMCQforGQ,
   createGeneralQuestions,
   deleteGQ,
+  deleteGQ_mcqId,
   getGeneralQuestions,
   getGQbyID,
   updateGQ,
   updateGQ_MCQ,
 } from "../../controllers/mcq/generalQcontroller";
-import { protectAccess } from "../../middlware/authMiddleware";
+
 import express from "express";
 const router = express.Router();
 
 // Get all the General Question
-router.get("/get-generalQ", protectAccess, getGeneralQuestions);
+router.get("/gGQ", authPrincipalOrTeacher, getGeneralQuestions);
 
 //Get General Question By ID
-router.get("/get-generalQ/:generalQSetId", protectAccess, getGQbyID);
+router.get("/gGQ/:generalQSetId", authPrincipalOrTeacher, getGQbyID);
 
 // create the General Question
-router.post("/create-generalQuestions", protectAccess, createGeneralQuestions);
+router.post(
+  "/cGQ",
+  authPrincipalOrTeacher,
+  checkTeacherPermissions(["create:generalQ"]),
+  createGeneralQuestions
+);
 
 // create the General Question and insert MCQ form
-router.post("/add-GQ/:generalQSetId", protectAccess, addMCQforGQ);
+router.post(
+  "/aGQ/:generalQSetId",
+  authPrincipalOrTeacher,
+  checkTeacherPermissions(["create:generalQ-id"]),
+  addMCQforGQ
+);
 
 // update the General Question
-router.patch("/updateGQ/:generalQSetId", protectAccess, updateGQ);
+router.patch(
+  "/uGQ/:generalQSetId",
+  authPrincipalOrTeacher,
+  checkTeacherPermissions(["update:generalQ"]),
+  updateGQ
+);
 
 // update  MCQ form
 router.patch(
-  "/updateGQ/:generalQSetId/mcq/:mcqId",
-  protectAccess,
+  "/uGQ/:generalQSetId/mcq/:mcqId",
+  authPrincipalOrTeacher,
+  checkTeacherPermissions(["update:generalQ-id/mcq-id"]),
   updateGQ_MCQ
 );
 
 // delete the General Question
-router.delete("/deleteGQ/:generalQSetId", protectAccess, deleteGQ);
+router.delete(
+  "/dGQ/:generalQSetId",
+  authPrincipalOrTeacher,
+  checkTeacherPermissions(["delete:generalQ"]),
+  deleteGQ
+);
+router.delete(
+  "/dGQ/:generalQSetId/mcq/:mcqId",
+  authPrincipalOrTeacher,
+  checkTeacherPermissions(["delete:generalQ-id/mcq-id"]),
+  deleteGQ_mcqId
+);
 
 export default router;
 

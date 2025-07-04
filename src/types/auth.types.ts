@@ -1,121 +1,114 @@
-// Update to auth.types.ts
-import { InstituteType } from "../constants/enums";
+// types/auth.types.ts
+import { InstituteType, PackageType, UserRole } from "../constants/enums";
 import { Document, Types } from "mongoose";
 
-// Basic Institute interface without methods
-export interface IInstitute {
-  _id: string;
-  instituteName: string;
-  phoneNumber: number; // Note: Changed from string to number to match your schema
+// Base interfaces
+export interface IUser {
+  _id: Types.ObjectId;
+  name: string;
   email: string;
   password: string;
-  instituteType: InstituteType;
-  msmeNumber?: string; // For coaching institutes
-  udiseNumber?: string; // For schools
-  courses?: Types.ObjectId[];
+  role: UserRole;
+  isActive: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-// Document interface that includes Mongoose methods
-export interface IInstituteDocument extends IInstitute, Document {
-  _id: string;
-  __v: number;
+// Principal (Institute) interface
+export interface IPrincipal extends IUser {
+  role: UserRole.PRINCIPAL;
+  instituteName: string;
+  phoneNumber: number;
+  instituteType: InstituteType;
+  msmeNumber?: string;
+  udiseNumber?: string;
+  courseId: Types.ObjectId[];
+  teachers: Types.ObjectId[];
+  profile: Types.ObjectId[];
+}
+
+export interface IPrincipalDocument extends Omit<IPrincipal, "_id">, Document {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-export interface IInstituteModel extends IInstituteDocument {
-  // Any additional static methods would go here
+// Teacher interface
+export interface ITeacher extends IUser {
+  role: UserRole.TEACHER;
+  applicationId: string; // Unique teacher login ID
+  phoneNumber: number;
+  instituteId: Types.ObjectId;
+  assignedSubjects: Types.ObjectId[];
+  permissions: string[];
+  isCredentialsSent: boolean;
+  credentialsSentAt?: Date;
 }
 
-export interface RegisterInstituteBody {
+export interface ITeacherDocument extends Omit<ITeacher, "_id">, Document {
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+// Super Admin interface (for you)
+export interface ISuperAdmin extends IUser {
+  role: UserRole.SUPER_ADMIN;
+}
+
+export interface ISuperAdminDocument
+  extends Omit<ISuperAdmin, "_id">,
+    Document {
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+// Request body interfaces
+export interface RegisterPrincipalBody {
+  _id: string;
   instituteName: string;
-  phoneNumber: number; // Note: Changed from string to number
   email: string;
   password: string;
+  phoneNumber: number;
   instituteType: InstituteType;
   msmeNumber?: string;
   udiseNumber?: string;
 }
-
-export interface LoginInstituteBody {
+export interface LoginPrincipalBody {
+  instituteName: string;
   email: string;
   password: string;
 }
 
-// Additional type for response data
-export interface IInstituteResponse {
-  _id: string;
-  instituteName: string;
-  phoneNumber: number; // Note: Changed from string to number
+export interface CreateTeacherBody {
+  name: string;
+  phoneNumber: number;
+  assignedSubjects: string[];
+  permissions: string[];
+}
+export interface LoginTeacherBody {
+  applicationId?: string;
+  password: string;
+}
+
+export interface GeneratePasskeyBody {
+  courseId: string;
+  packageType: PackageType;
+  durationMonths: number;
+  quantity: number;
+}
+
+// Response interfaces
+export interface InstituteAuthResponse {
+  id: string;
+  name: string;
   email: string;
-  token?: string;
-  message?: string;
-}
-
-// The rest of your type definitions...
-
-//Student Part
-export interface IStudentPasscode {
-  passkeyId: string;
-  instituteName: string;
-  course: Types.ObjectId;
-  isActive: boolean;
-  activatedAt: Date;
-  expiresAt?: Date;
-}
-
-export interface IStudent {
-  _id: string;
-  name?: string;
-  email?: string;
-  nanoId: IStudentPasscode[];
-  deviceId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-export interface IStudentModel extends IStudent, Document {
-  _id: string;
-  __v: number;
-}
-
-export interface StudentLoginBody {
-  instituteName: string;
-  passkey: string;
-  deviceId: string;
-}
-
-export interface SwitchPasskeyBody {
-  newPasskey: string;
-}
-
-export interface UpdateStudentBody {
-  name?: string;
-  email?: string;
-}
-
-export interface IStudentResponse {
-  _id: string;
-  name?: string;
-  email?: string;
+  role: UserRole;
   token: string;
-  activePasskey?: {
-    passkey: string;
-    course: {
-      _id: string;
-      name: string;
-    };
-    institute: {
-      _id: string;
-      name: string;
-    };
-    expiresAt?: Date;
-  };
 }
-// Request types with authentication
-export interface AuthenticatedRequest extends Request {
-  institute?: IInstituteModel;
-}
-export interface StudentAuthenticatedRequest extends Request {
-  student?: IStudentModel;
+
+// Express Request extensions
+declare global {
+  namespace Express {
+    interface Request {
+      user?: IPrincipalDocument | ITeacherDocument | ISuperAdminDocument;
+      userRole?: UserRole;
+      instituteId?: string;
+    }
+  }
 }

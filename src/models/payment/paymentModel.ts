@@ -1,6 +1,12 @@
-import { Schema, model } from "mongoose";
-import { IPaymentDocument } from "../../types/payment.types";
+import { Schema, model, Document } from "mongoose";
+import { IPayment } from "../../types/payment.types";
 import { PaymentStatus } from "../../constants/enums";
+
+// Extend the document with MongoDB specific fields
+export interface IPaymentDocument extends IPayment, Document {
+  _id: any;
+  __v: number;
+}
 
 const PaymentSchema = new Schema<IPaymentDocument>(
   {
@@ -22,13 +28,11 @@ const PaymentSchema = new Schema<IPaymentDocument>(
       required: true,
     },
     instituteId: {
-      type: Schema.Types.ObjectId,
-      ref: "InstituteAuth",
+      type: String,
       required: true,
     },
     courseId: {
-      type: Schema.Types.ObjectId,
-      ref: "Course",
+      type: String,
       required: true,
     },
     passkeyId: {
@@ -45,8 +49,7 @@ const PaymentSchema = new Schema<IPaymentDocument>(
       default: PaymentStatus.CREATED,
     },
     studentId: {
-      type: Schema.Types.ObjectId,
-      ref: "Student",
+      type: String,
     },
     deviceId: {
       type: String,
@@ -57,6 +60,16 @@ const PaymentSchema = new Schema<IPaymentDocument>(
     },
     completedAt: {
       type: Date,
+    },
+    platformFee: {
+      type: Number,
+      required: true,
+      default: 90,
+    },
+    courseFee: {
+      type: Number,
+      required: true,
+      default: 0,
     },
   },
   {

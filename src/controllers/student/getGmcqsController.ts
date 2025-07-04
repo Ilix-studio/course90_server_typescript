@@ -7,8 +7,9 @@ export const getGeneralMCQs = asyncHandler(
   async (req: Request, res: Response) => {
     const { courseId } = req.params;
 
+    // Fixed: Use 'courseId' instead of 'course' to match the schema
     const mcqs = await GeneralMCQModel.find({
-      course: courseId,
+      courseId: courseId,
     }).select("-mcqs.correctOption");
 
     res.json(mcqs);
@@ -42,8 +43,9 @@ export const submitGeneralMCQ = asyncHandler(
     });
 
     const submission = await SubmissionModel.create({
-      institute: questionSet.course,
-      course: questionSet.course,
+      // Fixed: Use 'courseId' instead of 'course' to get the correct field value
+      institute: questionSet.instituteId, // Add institute field
+      course: questionSet.courseId, // Use courseId from the questionSet
       type: "GQ",
       questionSet: questionSetId,
       answers: processedAnswers,

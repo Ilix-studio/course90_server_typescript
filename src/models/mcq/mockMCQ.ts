@@ -1,6 +1,6 @@
 import { Schema, model, Document, Types } from "mongoose";
 
-export interface PerformanceMCQSchema extends Document {
+export interface IPerformanceMCQSchema extends Document {
   _id: Types.ObjectId;
   questionName: string; // The text of the question
   options: string[]; // Array of options for the question
@@ -27,12 +27,21 @@ const performanceMCQSchema = new Schema({
   correctOption: {
     type: Number,
     required: true,
-    validate: [
-      function (this: PerformanceMCQSchema, value: number): boolean {
+    validate: {
+      validator: function (this: any, value: number): boolean {
+        // Ensure options exist and value is within range
+        if (!this.options || !Array.isArray(this.options)) {
+          return false;
+        }
         return value >= 0 && value < this.options.length;
       },
-      "correctOption must be a valid index of the options array",
-    ],
+      message: function (this: any, props: any) {
+        const optionsLength = this.options?.length || 0;
+        return `correctOption (${props.value}) must be between 0 and ${
+          optionsLength - 1
+        }`;
+      },
+    },
   },
   performanceData: {
     timeTaken: { type: Number },
@@ -41,26 +50,37 @@ const performanceMCQSchema = new Schema({
   },
 });
 
-interface MockMCQ extends Document {
-  course: Schema.Types.ObjectId;
-  subject: string;
+interface IMockMCQ extends Document {
+  // NEW: Subject-based attachment
+  subjectId: Types.ObjectId;
+  courseId: Types.ObjectId;
+  instituteId: Types.ObjectId;
   language: string;
   totalMarks: number;
   duration: number;
   passingMarks: number;
-  mcqs: PerformanceMCQSchema[];
+  negativeMarking: boolean;
+  mcqs: IPerformanceMCQSchema[];
 }
-const mockMcqSchema = new Schema<MockMCQ>(
+const mockMcqSchema = new Schema<IMockMCQ>(
   {
-    course: {
+    // NEW: Subject-based relationships
+    subjectId: {
+      type: Schema.Types.ObjectId,
+      ref: "Subject",
+      required: [true, "Subject is required"],
+    },
+
+    courseId: {
       type: Schema.Types.ObjectId,
       ref: "Course",
       required: [true, "Course is required"],
     },
-    subject: {
-      type: String,
-      required: [true, "Subject is required"],
-      trim: true,
+
+    instituteId: {
+      type: Schema.Types.ObjectId,
+      ref: "Principal",
+      required: [true, "Institute is required"],
     },
     language: {
       type: String,
@@ -71,6 +91,7 @@ const mockMcqSchema = new Schema<MockMCQ>(
       type: Number,
       required: [true, "Duration is required"],
     },
+
     totalMarks: {
       type: Number,
       required: [true, "Total Marks is required"],
@@ -79,10 +100,19 @@ const mockMcqSchema = new Schema<MockMCQ>(
       type: Number,
       required: [true, "Passing Marks is required"],
     },
+    negativeMarking: {
+      type: Boolean,
+      default: false,
+    },
     mcqs: [performanceMCQSchema],
   },
   {
     timestamps: true,
   }
 );
-export const MockMCQModel = model<MockMCQ>("MockMCQ", mockMcqSchema);
+
+mockMcqSchema.index({ instituteId: 1 });
+mockMcqSchema.index({ subjectId: 1 });
+mockMcqSchema.index({ courseId: 1 });
+
+export const MockMCQModel = model<IMockMCQ>("MockMCQ", mockMcqSchema);

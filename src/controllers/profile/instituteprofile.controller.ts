@@ -6,8 +6,9 @@ import {
 
 import { Response } from "express";
 import asyncHandler from "express-async-handler";
-import { InstituteAuth } from "../../models/auth/instituteModel";
+
 import { InstituteProfileModel } from "../../models/profile/profileModel";
+import { Principal } from "../../models/auth/principalModel";
 
 // Create a new profile
 export const createInstituteProfile = asyncHandler(
@@ -138,7 +139,7 @@ export const deleteInstituteProfile = asyncHandler(
       throw new Error("Profile not found");
     }
 
-    await InstituteAuth.findByIdAndUpdate(instituteId, { profile: null });
+    await Principal.findByIdAndUpdate(instituteId, { profile: null });
 
     res.status(200).json({
       message: "Profile deleted successfully",
