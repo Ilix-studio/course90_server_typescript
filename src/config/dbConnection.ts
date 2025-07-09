@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { seedSuperAdmin } from "../SuperAdmin/Seeder";
+// import { seedSuperAdmin } from "../SuperAdmin/Seeder";
 
 dotenv.config();
 

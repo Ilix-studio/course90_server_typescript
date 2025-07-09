@@ -1,3 +1,4 @@
+// controllers/profile/instituteprofile.controller.ts
 import {
   IInstituteProfile,
   ProfileRequest,
@@ -9,17 +10,40 @@ import asyncHandler from "express-async-handler";
 
 import { InstituteProfileModel } from "../../models/profile/profileModel";
 import { Principal } from "../../models/auth/principalModel";
+import { IPrincipalDocument } from "../../types/auth.types";
+import { UserRole } from "../../constants/enums";
 
 // Create a new profile
 export const createInstituteProfile = asyncHandler(
   async (req: ProfileRequest, res: Response<ProfileResponse>) => {
     const { instituteName, address, phoneNumber, website, bio, logo } =
       req.body;
-    const instituteId = req.institute?._id;
+
+    // Get institute ID from authenticated user
+    const user = req.user as IPrincipalDocument;
+    const userRole = req.userRole;
+
+    // Ensure user is a principal
+    if (userRole !== UserRole.PRINCIPAL) {
+      res.status(403);
+      throw new Error("Only principals can create institute profiles");
+    }
+
+    const instituteId = user._id;
 
     if (!instituteId) {
       res.status(400);
       throw new Error("Institute ID is required");
+    }
+
+    // Check if profile already exists
+    const existingProfile = await InstituteProfileModel.findOne({
+      institute: instituteId,
+    });
+
+    if (existingProfile) {
+      res.status(400);
+      throw new Error("Institute profile already exists");
     }
 
     const instituteProfile = await InstituteProfileModel.create({
@@ -51,7 +75,17 @@ export const createInstituteProfile = asyncHandler(
 
 export const getInstituteProfile = asyncHandler(
   async (req: ProfileRequest, res: Response<ProfileResponse>) => {
-    const instituteId = req.institute?._id;
+    // Get institute ID from authenticated user
+    const user = req.user as IPrincipalDocument;
+    const userRole = req.userRole;
+
+    // Ensure user is a principal
+    if (userRole !== UserRole.PRINCIPAL) {
+      res.status(403);
+      throw new Error("Only principals can access institute profiles");
+    }
+
+    const instituteId = user._id;
 
     if (!instituteId) {
       res.status(401);
@@ -86,7 +120,17 @@ export const getInstituteProfile = asyncHandler(
 
 export const updateInstituteProfile = asyncHandler(
   async (req: ProfileRequest, res: Response<ProfileResponse>) => {
-    const instituteId = req.institute?._id;
+    // Get institute ID from authenticated user
+    const user = req.user as IPrincipalDocument;
+    const userRole = req.userRole;
+
+    // Ensure user is a principal
+    if (userRole !== UserRole.PRINCIPAL) {
+      res.status(403);
+      throw new Error("Only principals can update institute profiles");
+    }
+
+    const instituteId = user._id;
 
     if (!instituteId) {
       res.status(401);
@@ -123,7 +167,17 @@ export const updateInstituteProfile = asyncHandler(
 
 export const deleteInstituteProfile = asyncHandler(
   async (req: ProfileRequest, res: Response) => {
-    const instituteId = req.institute?._id;
+    // Get institute ID from authenticated user
+    const user = req.user as IPrincipalDocument;
+    const userRole = req.userRole;
+
+    // Ensure user is a principal
+    if (userRole !== UserRole.PRINCIPAL) {
+      res.status(403);
+      throw new Error("Only principals can delete institute profiles");
+    }
+
+    const instituteId = user._id;
 
     if (!instituteId) {
       res.status(401);
@@ -139,6 +193,7 @@ export const deleteInstituteProfile = asyncHandler(
       throw new Error("Profile not found");
     }
 
+    // Remove profile reference from principal
     await Principal.findByIdAndUpdate(instituteId, { profile: null });
 
     res.status(200).json({

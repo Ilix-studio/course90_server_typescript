@@ -1,7 +1,14 @@
+// types/request.types.ts
 import { Request } from "express";
-
-import { IInstitute } from "./auth.types";
+import {
+  IPrincipalDocument,
+  ITeacherDocument,
+  ISuperAdminDocument,
+} from "./auth.types";
+import { UserRole } from "../constants/enums";
 
 export interface AuthenticatedRequest extends Request {
-  institute?: IInstitute;
+  user?: IPrincipalDocument | ITeacherDocument | ISuperAdminDocument;
+  userRole?: UserRole;
+  instituteId?: string;
 }
