@@ -55,6 +55,7 @@ const publishedMockSchema = new Schema<IPublishedMock>({
 publishedMockSchema.index({ instituteId: 1 });
 publishedMockSchema.index({ courseId: 1 });
 publishedMockSchema.index({ subjectId: 1 });
+
 export const PublishedMock = model<IPublishedMock>(
   "PublishedMock",
   publishedMockSchema

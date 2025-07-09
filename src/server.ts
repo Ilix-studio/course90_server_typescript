@@ -58,7 +58,7 @@ app.get("/favicon.ico", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Listening to http://localhost:${PORT}`);
 });
-// API Routes - New Role-Based System
+// API Routes - New Role-Based System (part1)
 app.use("/api/v2/auth", authRoutes);
 app.use("/api/v2/superadmin", superAdminRoutes);
 app.use("/api/v2/courses", courseRoutes);
@@ -67,13 +67,14 @@ app.use("/api/v2/GQ", generalRoutes);
 app.use("/api/v2/MQ", mockRoutes);
 app.use("/api/v2/PQ", publishRoutes);
 app.use("/api/v2/notes", notesRoutes);
-
+// (part2)
 app.use("/api/v2/pricing", pricingRoutes);
 app.use("/api/v2/passkeys", passkeysRoutes);
 app.use("/api/v2/payments", paymentsRoutes);
+// (part3)
 app.use("/api/v2/students", studentsRoutes);
-
 app.use("/api/v2/courseAccess", courseAccessRoutes);
+// (part4)
 app.use("/api/v2/profile", profileRoutes);
 // (Student and Insitute profile)
 
