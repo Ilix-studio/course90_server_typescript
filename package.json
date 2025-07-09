@@ -6,7 +6,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc",
-    "gcp-build": "tsc -p .",
+    "gcp-build": "npm run build",
     "postbuild": "echo 'Build completed successfully'",
     "start": "node dist/server.js",
     "start:prod": "npm run build && npm start",
