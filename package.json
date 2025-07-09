@@ -6,6 +6,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc",
+    "gcp-build": "tsc -p .",
     "postbuild": "echo 'Build completed successfully'",
     "start": "node dist/server.js",
     "start:prod": "npm run build && npm start",
@@ -25,7 +26,6 @@
   "license": "ISC",
   "description": "Node.js TypeScript Backend",
   "dependencies": {
-    "@types/crypto-js": "^4.2.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
@@ -38,12 +38,14 @@
     "nanoid": "^3.3.4",
     "razorpay": "^2.9.5",
     "twilio": "^5.7.1",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "typescript": "^5.7.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
+    "@types/crypto-js": "^4.2.2",
     "@types/express": "^5.0.0",
     "@types/joi": "^17.2.2",
     "@types/jsonwebtoken": "^9.0.7",
@@ -53,7 +55,6 @@
     "nodemon": "^3.1.9",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.7.3"
+    "ts-node-dev": "^2.0.0"
   }
 }
