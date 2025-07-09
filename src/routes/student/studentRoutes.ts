@@ -1,32 +1,40 @@
-// routes/student/studentRoutes.ts
-import {
-  getStudentCourses,
-  updateStudentProfile,
-} from "../../controllers/student/studentController";
+import { authStudent } from "../../middlware/authStudentMiddleware";
 import {
   getPerformance,
   loginStudent,
-  renewPasskey,
   switchAccount,
+  switchPasskey,
   validatePasskey,
-} from "../../controllers/student/studentAuthcontroller";
-
+} from "../../controllers/student/studentController2";
 import express from "express";
+import {
+  getStudentCourses,
+  getStudentProfile,
+  renewPasskey,
+  updateStudentProfile,
+} from "../../controllers/student/studentController1";
 
 const router = express.Router();
 
-// Public student routes
+// Public routes
 router.post("/login", loginStudent);
+router.post("/validate-passkey", validatePasskey);
+router.post("/switch-account", switchAccount);
 
-// Protected student routes
-router.post("/validate", validatePasskey);
-router.post("/switch-passkey", switchAccount);
+// Protected routes
+router.use(authStudent); // All routes below this require authentication
+
+// Student profile routes
+router.get("/profile", getStudentProfile);
 router.put("/profile", updateStudentProfile);
+router.get("/performance", getPerformance);
+
+// Passkey management
+
+router.post("/switch-passkey", switchPasskey);
+router.post("/renew-passkey", renewPasskey);
+
+// Course access
 router.get("/courses", getStudentCourses);
-// router.post("/submit-answers", submitAnswers);
-router.get("/progress", getPerformance);
-router.post("/renew", renewPasskey);
 
 export default router;
-// authenticateStudent check valid passkey login to one device
-// Activate passkey for two or device - feature

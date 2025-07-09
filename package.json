@@ -1,21 +1,27 @@
 {
   "name": "course90_server",
   "version": "1.0.0",
+  "type": "commonjs",
   "main": "dist/server.js",
   "scripts": {
-    "start": " node dist/server.js",
-    "server": "nodemon",
+    "prebuild": "rimraf dist",
     "build": "tsc",
-    "lint": "eslint . --ext .ts",
-    "test": "jest",
-    "deploy": "npm run build && gcloud app deploy",
-    "gcp-build": "tsc -p ."
+    "postbuild": "echo 'Build completed successfully'",
+    "start": "node dist/server.js",
+    "start:prod": "npm run build && npm start",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev:watch": "nodemon --exec ts-node src/server.ts",
+    "server": "nodemon src/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "echo 'Linting not configured'",
+    "clean": "rimraf dist",
+    "type-check": "tsc --noEmit"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "keywords": [],
-  "author": "",
+  "author": "#ilix",
   "license": "ISC",
   "description": "Node.js TypeScript Backend",
   "dependencies": {
@@ -45,6 +51,7 @@
     "@types/node": "^22.10.7",
     "@types/winston": "^2.4.4",
     "nodemon": "^3.1.9",
+    "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.7.3"

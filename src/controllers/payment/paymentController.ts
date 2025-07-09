@@ -79,7 +79,7 @@ export const createOrder = asyncHandler(
       passkeyId,
       durationMonths: durationMonths || passkey.durationMonths || 1,
       status: PaymentStatus.CREATED,
-
+      passkey,
       deviceId,
       platformFee: 90, // Default platform fee
       courseFee: amount - 90, // Remaining is course fee

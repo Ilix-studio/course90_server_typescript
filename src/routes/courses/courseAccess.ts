@@ -7,10 +7,8 @@ import {
   getStudentEnrollments,
 } from "../../controllers/pricing/pricingController";
 import express from "express";
-import {
-  authPrincipalOrTeacher,
-  authStudent,
-} from "../../middlware/roleMiddleware";
+import { authPrincipalOrTeacher } from "../../middlware/roleMiddleware";
+import { authStudent } from "../../middlware/authStudentMiddleware";
 
 const router = express.Router();
 
@@ -23,3 +21,5 @@ router.post("/enroll", enrollStudent); // Public - for payment flow
 router.get("/course/:courseId", authPrincipalOrTeacher, getCourseEnrollments);
 
 export default router;
+
+// router.get("/course/:courseId/general-questions", hasAccessToCourse, getGeneralQuestions);

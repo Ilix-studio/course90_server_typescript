@@ -3,13 +3,13 @@ import logger from "./logger";
 
 export const generateToken = (id: string): string => {
   // Verify secret exists
-  if (!process.env.ACCESS_TOKEN_SECRET) {
+  if (!process.env.JWT_SECRET) {
     logger.error("JWT secret is not configured");
     throw new Error("JWT secret is not configured");
   }
 
   try {
-    const token = jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET, {
+    const token = jwt.sign({ id }, process.env.JWT_SECRET, {
       expiresIn: "30d",
     });
 
@@ -27,5 +27,5 @@ export const generateToken = (id: string): string => {
 };
 
 export const verifyToken = (token: string): jwt.JwtPayload => {
-  return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!) as jwt.JwtPayload;
+  return jwt.verify(token, process.env.JWT_SECRET!) as jwt.JwtPayload;
 };

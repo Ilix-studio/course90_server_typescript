@@ -153,50 +153,6 @@ export const requirePermission = (permission: string) =>
     });
   });
 
-// Student authentication middleware (uses passkey + device validation)
-export const authStudent = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const { passkeyId, deviceId } = req.headers;
-
-    if (!passkeyId || !deviceId) {
-      res.status(401);
-      throw new Error("Passkey ID and Device ID are required");
-    }
-
-    try {
-      // Find student using passkey and device
-      const student = await StudentModel.findByPasskeyAndDevice(
-        passkeyId as string,
-        deviceId as string
-      );
-
-      if (!student) {
-        res.status(401);
-        throw new Error("Invalid passkey or device");
-      }
-
-      // Get the active passkey
-      const activePasskey = student.getActivePasscode();
-      if (!activePasskey) {
-        res.status(401);
-        throw new Error("No active passkey found");
-      }
-
-      // Check if passkey is expired
-      if (activePasskey.expiresAt && activePasskey.expiresAt <= new Date()) {
-        res.status(401);
-        throw new Error("Passkey has expired");
-      }
-
-      next();
-    } catch (error: any) {
-      console.error("Student authentication error:", error);
-      res.status(401);
-      throw new Error("Authentication failed");
-    }
-  }
-);
-
 // Resource ownership middleware (ensures user owns the specific resource)
 export const authWithResourceOwnership = (resourceType: string) =>
   asyncHandler(async (req: Request, res: Response, next: NextFunction) => {

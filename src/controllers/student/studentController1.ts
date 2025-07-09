@@ -104,7 +104,7 @@ export const getStudentCourses = asyncHandler(
     // Transform passkeys to course format
     const courses = passkeys.map((passkey) => ({
       passkeyId: passkey.passkeyId,
-      course: passkey.courseId,
+      courseId: passkey.courseId,
       institute: passkey.instituteId,
       status: passkey.status,
       assignedAt: passkey.assignedAt,
