@@ -1,0 +1,30 @@
+steps:
+  # Build using Node.js buildpack
+  - name: "gcr.io/k8s-skaffold/pack"
+    args:
+      - build
+      - "gcr.io/c90-api/course90-server-typescript"
+      - "--builder=gcr.io/buildpacks/builder:v1"
+      - "--env=NODE_ENV=production"
+
+  # Push to Container Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/c90-api/course90-server-typescript"]
+
+  # Deploy to Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "course90-server-typescript"
+      - "--image=gcr.io/c90-api/course90-server-typescript"
+      - "--region=asia-south1"
+      - "--platform=managed"
+      - "--allow-unauthenticated"
+      - "--port=8080"
+
+images:
+  - "gcr.io/c90-api/course90-server-typescript"
+
+timeout: 1200s

@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
+
 import express, { Application, Request, Response, NextFunction } from "express";
 import cors from "cors";
 import corsOptions from "./config/corsOptions";
@@ -29,11 +30,14 @@ export const app: Application = express();
 
 const PORT = process.env.PORT || 8080;
 
+// Connect to MongoDB first
+connectDB();
+
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Health check endpoint (add this before other routes)
+// Health check endpoint
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
@@ -43,21 +47,22 @@ app.get("/", (req: Request, res: Response) => {
     environment: process.env.NODE_ENV || "development",
   });
 });
+
 app.get("/_ah/health", (req: Request, res: Response) => {
   res.status(200).json({
     status: "healthy",
     timestamp: new Date().toISOString(),
   });
 });
+
 app.get("/_ah/start", (req: Request, res: Response) => {
   res.status(200).send("OK");
 });
+
 app.get("/favicon.ico", (req, res) => {
   res.status(204).end();
 });
-app.listen(PORT, () => {
-  console.log(`Listening to http://localhost:${PORT}`);
-});
+
 // API Routes - New Role-Based System (part1)
 app.use("/api/v2/auth", authRoutes);
 app.use("/api/v2/superadmin", superAdminRoutes);
@@ -67,16 +72,18 @@ app.use("/api/v2/GQ", generalRoutes);
 app.use("/api/v2/MQ", mockRoutes);
 app.use("/api/v2/PQ", publishRoutes);
 app.use("/api/v2/notes", notesRoutes);
+
 // (part2)
 app.use("/api/v2/pricing", pricingRoutes);
 app.use("/api/v2/passkeys", passkeysRoutes);
 app.use("/api/v2/payments", paymentsRoutes);
+
 // (part3)
 app.use("/api/v2/students", studentsRoutes);
 app.use("/api/v2/courseAccess", courseAccessRoutes);
+
 // (part4)
 app.use("/api/v2/profile", profileRoutes);
-// (Student and Insitute profile)
 
 // Global error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -102,5 +109,9 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 app.use(routeNotFound);
 app.use(errorHandler);
 
-// Connect to MongoDB
-connectDB();
+// Start the server (moved to the end)
+app.listen(PORT, () => {
+  console.log(`Listening to http://localhost:${PORT}`);
+});
+
+export default app;
