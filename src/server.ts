@@ -17,8 +17,10 @@ import notesRoutes from "./routes/mcq/notesRoute";
 import pricingRoutes from "./routes/pricing/pricingRoutes";
 import passkeysRoutes from "./routes/passkeys/passkeyRoutes";
 import paymentsRoutes from "./routes/payment//paymentRoutes";
-import studentsRoutes from "./routes/student/studentRoutes";
-import courseAccessRoutes from "./routes/courses/courseAccess";
+
+import studentsRoutes from "./routes/student/studentAuthRoutes";
+import courseVerifyRoutes from "./routes/courses/courseVerify";
+import courseAccessRoutes from "./routes/student/studentCourseRoutes";
 
 import profileRoutes from "./routes/profile/profileRoutes";
 
@@ -80,6 +82,7 @@ app.use("/api/v2/payments", paymentsRoutes);
 
 // (part3)
 app.use("/api/v2/students", studentsRoutes);
+app.use("/api/v2/courseVerify", courseVerifyRoutes);
 app.use("/api/v2/courseAccess", courseAccessRoutes);
 
 // (part4)

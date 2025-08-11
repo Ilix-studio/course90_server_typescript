@@ -111,16 +111,7 @@ export const statusHistorySchema = new Schema(
       type: Date,
       default: Date.now,
     },
-    changedBy: {
-      type: Schema.Types.ObjectId,
-      required: true,
-      refPath: "statusHistory.changedByModel",
-    },
-    changedByModel: {
-      type: String,
-      enum: ["Principal", "Teacher", "System"],
-      default: "Principal",
-    },
+
     reason: {
       type: String,
       maxlength: 200,

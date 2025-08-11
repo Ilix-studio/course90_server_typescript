@@ -36,6 +36,11 @@ export const publishMockTest = asyncHandler(
       throw new Error("Invalid course ID format");
     }
 
+    if (!Types.ObjectId.isValid(subjectId)) {
+      res.status(400);
+      throw new Error("Invalid subject ID format");
+    }
+
     // Extract instituteId from authenticated user's token
     const instituteId = getInstituteId(req);
 

@@ -8,7 +8,9 @@ const connectionString = process.env.MONGO_URI;
 const connectDB = async () => {
   try {
     await mongoose.connect(connectionString as string);
-    console.log(`Mongo DB is connected successfully 🐟`);
+    console.log(
+      `Mongo DB is connected successfully 🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟🐟`
+    );
     // await seedSuperAdmin();
   } catch (err) {
     console.error("Error connecting to MongoDB:", err);

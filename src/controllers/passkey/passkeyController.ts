@@ -124,6 +124,7 @@ export const generatePasskeys = asyncHandler(
         nextPlatformFeeDue: nextMonth,
         accessCount: 0,
         deviceIds: [], // Initialize empty array for multiple device support
+        hasCourseAccess: true, // Enable course access
       });
 
       // Add pricing details for response
