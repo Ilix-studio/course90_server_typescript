@@ -12,7 +12,7 @@ import {
   ValidatePasskeyBody,
 } from "../../types/studentAuth.types";
 import { PasskeyStatus } from "../../constants/enums";
-import { generateToken } from "../../utils/jwt.utils";
+import { generateStudentToken, generateToken } from "../../utils/jwt.utils";
 import mongoose from "mongoose";
 
 /**
@@ -72,61 +72,75 @@ export const loginStudent = asyncHandler(
       res.json({
         success: true,
         paymentRequired: true,
-        message: "Platform fee payment required to activate passkey",
+        message: "Payment required to activate passkey",
         data: {
-          passkeyId: passkey.passkeyId,
-          platformFee: platformFee,
-          courseInfo: {
-            _id: courseInfo?._id,
-            name: courseInfo?.name,
-            description: courseInfo?.description,
-          },
+          passkeyId,
+          courseId: courseInfo._id,
+          courseName: courseInfo.name,
+          platformFee,
+          status: passkey.status,
         },
       });
-      return; // Exit early
-    }
-
-    // Check expiration date
-    if (passkey.expiresAt && passkey.expiresAt <= new Date()) {
-      console.log(`Expired passkey: ${passkey.expiresAt}`);
-      res.status(401);
-      throw new Error("Expired passkey");
-    }
-
-    if (!passkey) {
-      res.status(401);
-      throw new Error("Invalid or expired passkey");
+      return;
     }
 
     // Find or create student
-    let student = await StudentModel.findByPasskeyAndDevice(
-      passkeyId,
-      deviceId
-    );
+    let student = await StudentModel.findOne({
+      $or: [{ "passkeys.passkeyId": passkeyId }, { deviceId }],
+    });
 
     if (!student) {
-      // Create new student with this device and passkey
+      // Create new student account
       student = new StudentModel({
         deviceId,
-        passkeys: [
-          {
-            passkeyId,
-            institute: passkey.instituteId,
-            courseId: passkey.courseId,
-            isActive: true,
-            activatedAt: new Date(),
-            expiresAt: passkey.expiresAt
-              ? new Date(passkey.expiresAt)
-              : undefined,
-          },
-        ],
+        passkeys: [],
+      });
+    } else {
+      // Update device ID if different
+      if (student.deviceId !== deviceId) {
+        student.deviceId = deviceId;
+      }
+    }
+
+    // Check if student already has this passkey
+    const existingPasskey = student.passkeys.find(
+      (p) => p.passkeyId === passkeyId
+    );
+
+    if (!existingPasskey) {
+      // Add new passkey to student
+      student.passkeys.push({
+        passkeyId,
+        institute: (passkey as any).instituteId,
+        courseId: (passkey as any).courseId,
+        isActive: true,
+        activatedAt: new Date(),
+        expiresAt: passkey.expiresAt ? new Date(passkey.expiresAt) : undefined,
       });
 
-      // Update passkey with student info
+      // Deactivate other passkeys
+      student.passkeys.forEach((p) => {
+        if (p.passkeyId !== passkeyId) {
+          p.isActive = false;
+        }
+      });
+    } else if (!existingPasskey.isActive) {
+      // Activate this passkey and deactivate others
+      student.passkeys.forEach((p) => {
+        p.isActive = p.passkeyId === passkeyId;
+      });
+    }
+
+    // Update passkey with student info if not already set
+    const hasStudentId = await PasskeyModel.findOne({
+      _id: passkey._id,
+      studentId: { $exists: true, $ne: null },
+    });
+
+    if (!hasStudentId) {
       await PasskeyModel.findByIdAndUpdate(passkey._id, {
         $set: {
           studentId: student._id,
-          deviceId: deviceId,
           assignedAt: new Date(),
           status: PasskeyStatus.STUDENT_ASSIGNED,
         },
@@ -134,80 +148,17 @@ export const loginStudent = asyncHandler(
           statusHistory: {
             status: PasskeyStatus.STUDENT_ASSIGNED,
             changedAt: new Date(),
-            changedBy: student._id,
-            changedByModel: "Student",
-            reason: "Student first login",
+
+            reason: "Student login",
           },
         },
       });
-    } else {
-      // Check if this passkey is already in student's passkeys array
-      const existingPasskey = student.passkeys.find(
-        (p) => p.passkeyId === passkeyId
-      );
-
-      if (!existingPasskey) {
-        // Add this passkey to student's passkeys array
-        student.passkeys.push({
-          passkeyId,
-          institute: passkey.instituteId,
-          courseId: passkey.courseId,
-          isActive: true,
-          activatedAt: new Date(),
-          expiresAt: passkey.expiresAt
-            ? new Date(passkey.expiresAt)
-            : undefined,
-        });
-
-        // Deactivate other passkeys
-        student.passkeys.forEach((p) => {
-          if (p.passkeyId !== passkeyId) {
-            p.isActive = false;
-          }
-        });
-      } else if (!existingPasskey.isActive) {
-        // Activate this passkey and deactivate others
-        student.passkeys.forEach((p) => {
-          p.isActive = p.passkeyId === passkeyId;
-        });
-      }
-
-      // Update passkey with student info if not already set
-      const hasStudentId = await PasskeyModel.findOne({
-        _id: passkey._id,
-        studentId: { $exists: true, $ne: null },
-      });
-
-      if (!hasStudentId) {
-        await PasskeyModel.findByIdAndUpdate(passkey._id, {
-          $set: {
-            studentId: student._id,
-            assignedAt: new Date(),
-            status: PasskeyStatus.STUDENT_ASSIGNED,
-          },
-          $push: {
-            statusHistory: {
-              status: PasskeyStatus.STUDENT_ASSIGNED,
-              changedAt: new Date(),
-              changedBy: student._id,
-              changedByModel: "Student",
-              reason: "Student login",
-            },
-          },
-        });
-      }
     }
 
     await student.save();
 
-    // Create token
-    const token = generateToken(
-      JSON.stringify({
-        id: student._id,
-        role: "STUDENT",
-        passkeyId,
-      })
-    );
+    // FIXED: Create token using the new generateStudentToken function
+    const token = generateStudentToken(student._id.toString(), passkeyId);
 
     // Get active passkey details
     const activePasskey = student.getActivePasskey();
@@ -237,15 +188,14 @@ export const loginStudent = asyncHandler(
                 _id: activePasskey.institute,
                 name: "Institute Name", // This will be populated in a real scenario
               },
-              expiresAt: activePasskey.expiresAt
-                ? new Date(activePasskey.expiresAt)
-                : undefined,
+              expiresAt: activePasskey.expiresAt,
             }
           : undefined,
       },
     });
   }
 );
+
 /**
  * @desc    Validate a passkey
  * @route   POST /api/v2/students/validate-passkey
@@ -389,8 +339,7 @@ export const switchPasskey = asyncHandler(
                 statusHistory: {
                   status: PasskeyStatus.STUDENT_ASSIGNED,
                   changedAt: new Date(),
-                  changedBy: student._id,
-                  changedByModel: "Student",
+
                   reason: "Student switched to this passkey",
                 },
               }
@@ -767,8 +716,7 @@ export const renewPasskey = asyncHandler(
         statusHistory: {
           status: PasskeyStatus.ACTIVE,
           changedAt: new Date(),
-          changedBy: student._id,
-          changedByModel: "Student",
+
           reason: "Passkey renewal",
         },
         platformFeePayments: {
@@ -884,12 +832,9 @@ export const switchAccount = asyncHandler(
     await existingStudent.save();
 
     // Create token for the student
-    const token = generateToken(
-      JSON.stringify({
-        id: existingStudent._id,
-        role: "STUDENT",
-        passkeyId,
-      })
+    const token = generateStudentToken(
+      existingStudent._id.toString(),
+      passkeyId
     );
 
     // Get active passkey details

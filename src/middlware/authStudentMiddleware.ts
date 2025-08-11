@@ -3,6 +3,7 @@ import { StudentModel } from "../models/auth/studentModel";
 import { IStudentDocument } from "../types/studentAuth.types";
 import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
+import { PasskeyModel } from "../models/passkeys/passkeyModel";
 
 // Extend Express Request to include student user
 declare global {
@@ -14,7 +15,7 @@ declare global {
 }
 
 // Define token payload interface
-interface TokenPayload {
+export interface TokenPayload {
   id: string;
   role: string;
   passkeyId: string;
@@ -40,9 +41,13 @@ export const authStudent = asyncHandler(
           throw new Error("JWT_SECRET is not defined");
         }
 
-        // Verify token
-        const decoded = jwt.verify(token, secret) as string;
-        const payload = JSON.parse(decoded) as TokenPayload;
+        // Verify token - JWT verify returns a parsed object, not a string
+        const decoded = jwt.verify(token, secret) as TokenPayload;
+
+        // No need to JSON.parse - decoded is already an object
+        const payload = decoded;
+
+        console.log("Decoded token payload:", payload); // Debug log
 
         // Find student by ID and passkey
         const student = await StudentModel.findOne({
@@ -146,29 +151,35 @@ export const authStudent = asyncHandler(
 export const hasAccessToCourse = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { courseId } = req.params;
+    const passkeyId = req.headers.passkeyId as string;
 
     if (!courseId) {
       res.status(400);
       throw new Error("Course ID is required");
     }
 
-    if (!req.studentUser) {
+    if (!passkeyId) {
       res.status(401);
-      throw new Error("Authentication required");
+      throw new Error("Passkey ID required");
     }
 
-    const student = req.studentUser;
+    // Check access using the passkey from token
+    const passkey = await PasskeyModel.findOne({
+      passkeyId: passkeyId,
+      courseId: courseId,
+    });
 
-    // Check if student has access to this course
-    if (!student.hasCourseAccess(courseId)) {
+    if (!passkey) {
       res.status(403);
       throw new Error("You do not have access to this course");
     }
 
+    console.log(
+      `Access granted for passkey ${passkeyId} to course ${courseId}`
+    );
     next();
   }
 );
-
 // Helper middleware to check if course belongs to institute
 export const courseInInstitute = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -178,15 +189,6 @@ export const courseInInstitute = asyncHandler(
       res.status(400);
       throw new Error("Course ID and Institute ID are required");
     }
-
-    // Check if course belongs to institute (implement this using your models)
-    // For example:
-    // const course = await CourseModel.findOne({ _id: courseId, instituteId });
-
-    // if (!course) {
-    //   res.status(404);
-    //   throw new Error('Course not found in this institute');
-    // }
 
     next();
   }

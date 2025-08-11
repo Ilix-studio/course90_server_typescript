@@ -1,3 +1,5 @@
+import { IStudentDocument } from "./studentAuth.types";
+
 ``; // Course Access Interface
 export interface ICourseAccess {
   passkeyId: string;
@@ -27,4 +29,14 @@ export interface EnrollStudentRequest {
   razorpayOrderId: string;
   razorpayPaymentId: string;
   deviceId: string;
+}
+
+// Enhanced request interface with passkey data
+export interface PasskeyRequest extends Request {
+  passkeyData?: {
+    studentId: string;
+    courseId: string;
+    passkeyId: string;
+    instituteId: string;
+  };
 }

@@ -26,15 +26,11 @@ router.use(authStudent); // All routes below this require authentication
 
 // Student profile routes
 router.get("/profile", getStudentProfile);
-router.put("/profile", updateStudentProfile);
+router.put("/profile/put", updateStudentProfile);
 router.get("/performance", getPerformance);
 
 // Passkey management
-
 router.post("/switch-passkey", switchPasskey);
 router.post("/renew-passkey", renewPasskey);
-
-// Course access
-router.get("/courses", getStudentCourses);
 
 export default router;
