@@ -10,13 +10,13 @@ import {
 import {
   getGeneralMCQs,
   getMockMCQs,
-} from "controllers/student/studentCourseController";
-import { getNotes } from "controllers/mcq/notesController";
+} from "../../controllers/student/studentCourseController";
+import { getNotes } from "../../controllers/mcq/notesController";
 import {
   submitGeneralMCQ,
   submitMockMCQ,
   submitPublishedMCQ,
-} from "controllers/student/answerSubmitController";
+} from "../../controllers/student/answerSubmitController";
 
 const router = express.Router();
 
