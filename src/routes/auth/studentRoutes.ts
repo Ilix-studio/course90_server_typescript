@@ -1,17 +1,5 @@
 import express from "express";
-import {
-  getGeneralMCQs,
-  submitGeneralMCQ,
-} from "../../controllers/student/getGmcqsController";
-import {
-  getMockMCQs,
-  submitMockMCQ,
-} from "../../controllers/student/getMmcqsController";
-import { getNotes } from "../../controllers/student/getNoteController";
-import {
-  getFeedMockTests,
-  submitPublishedMCQ,
-} from "../../controllers/student/getPublishQcontroller";
+
 import {
   getPerformance,
   loginStudent,
@@ -19,6 +7,16 @@ import {
   switchAccount,
   validatePasskey,
 } from "../../controllers/student/studentController2";
+import {
+  getGeneralMCQs,
+  getMockMCQs,
+} from "controllers/student/studentCourseController";
+import { getNotes } from "controllers/mcq/notesController";
+import {
+  submitGeneralMCQ,
+  submitMockMCQ,
+  submitPublishedMCQ,
+} from "controllers/student/answerSubmitController";
 
 const router = express.Router();
 
@@ -41,7 +39,7 @@ router.get("/courses/:courseId/mock-mcqs", getMockMCQs);
 router.get("/courses/:courseId/notes", getNotes);
 
 //Get publish MCQs from all the institutes.
-router.get("/feed", getFeedMockTests);
+// router.get("/feed", getFeedMockTests);
 router.post("/mcq/publish/submit", submitPublishedMCQ);
 
 // Submit an answer to an MCQ (General or MOCK).
